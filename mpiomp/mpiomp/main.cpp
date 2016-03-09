@@ -115,6 +115,11 @@ void bcReplica(int threadCount, int iterations, int globalColCount, int rowCount
 	
 	int itr;
 	int k;
+
+	double* threadTimes = (double*)malloc(sizeof(double)*threadCount);
+	for (i = 0; i < threadCount; ++i){
+		threadTimes[i] = 0.0;
+	}
 	
 	for (itr = 0; itr < iterations; ++itr) {
 		for (i = 0; i < pointComponentCountGlobal; ++i) {
@@ -137,12 +142,22 @@ void bcReplica(int threadCount, int iterations, int globalColCount, int rowCount
 		{
 			int num_t = omp_get_num_threads();
 			int tid = omp_get_thread_num();
-			int rank;
-			MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-			cout << ("Rank: " + to_string(rank) + " Thread: " + to_string(tid) + " Total Threads: " + to_string(num_t) +"\n");
-			double t1, t2;
-			const int threadIdx = 0;
-			matrixMultiply(threadPartialBofZ, preX, rowCountPerUnit, targetDimension, globalColCount, blockSize, threadPartialOutMM, threadIdx*pairCountLocal, threadIdx*pointComponentCountLocal);
+			//int rank;
+			//MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+			//cout << ("Rank: " + to_string(rank) + " Thread: " + to_string(tid) + " Total Threads: " + to_string(num_t) +"\n");
+
+			auto t = std::chrono::system_clock::now();
+			matrixMultiply(threadPartialBofZ, preX, rowCountPerUnit, targetDimension, globalColCount, blockSize, threadPartialOutMM, tid*pairCountLocal, tid*pointComponentCountLocal);
+			threadTimes[tid] += (std::chrono::system_clock::now() - t).count();
 		}
 	}
+
+	int rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	if (rank == 0) {
+		for (i = 0; i < threadCount; ++i) {
+			cout << "tid: " + to_string((long long)i) + "  " + to_string((long double)threadTimes[i] / iterations) + "\n";
+		}
+	}
+	
 }

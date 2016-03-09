@@ -3,6 +3,7 @@
 #include <mpi.h>
 #include <omp.h>
 #include <string>
+#include <chrono>
 using namespace std;
 
 void matrixMultiply(double*, double*, int, int, int, int, double*, int, int);
@@ -114,6 +115,7 @@ void bcReplica(int threadCount, int iterations, int globalColCount, int rowCount
 	
 	int itr;
 	int k;
+	
 	for (itr = 0; itr < iterations; ++itr) {
 		for (i = 0; i < pointComponentCountGlobal; ++i) {
 			preX[i] = (double)rand() / (double)RAND_MAX;

@@ -167,7 +167,7 @@ void bcReplica(int threadCount, int iterations, int globalColCount, int rowCount
 	MPI_Gather(threadTimes, threadCount, MPI_DOUBLE, timeDistribution, threadCount, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 
 	for (i = 0; i < size*threadCount; ++i) {
-		cout << "rank: " + to_string((long)(i / threadCount)) + " tid: " + to_string((long)(i % threadCount)) + " time (count): " + to_string((long double)threadTimes[i]) + "\n";
+		cout << "rank: " + to_string((long long)(i / threadCount)) + " tid: " + to_string((long long)(i % threadCount)) + " time (count): " + to_string((long double)threadTimes[i]) + "\n";
 	}
 
 

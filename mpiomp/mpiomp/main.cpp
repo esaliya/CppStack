@@ -156,12 +156,12 @@ void bcReplica(int threadCount, int iterations, int globalColCount, int rowCount
 	int size;
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
-	if (rank == 0) {
+	/*if (rank == 0) {*/
 		for (i = 0; i < threadCount; ++i) {
 			threadTimes[i] = threadTimes[i] / iterations;
 			/*cout << "tid: " + to_string((long long)i) + "  " + to_string((long double)threadTimes[i] / iterations) + "\n";*/
 		}
-	}
+	/*}*/
 
 	double* timeDistribution = (double*)(malloc(sizeof(double)*size*threadCount));
 	MPI_Gather(threadTimes, threadCount, MPI_DOUBLE, timeDistribution, threadCount, MPI_DOUBLE, 0, MPI_COMM_WORLD);

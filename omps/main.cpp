@@ -12,7 +12,7 @@ using namespace std;
 int main() {
     cout << "Hello, World!" << endl;
 
-    omp_set_num_threads(4);
+    omp_set_num_threads(8);
 
 #pragma omp parallel
     {

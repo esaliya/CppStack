@@ -1,9 +1,10 @@
-#include <chrono>
 #include <iostream>
 #include <mpi.h>
 #include <omp.h>
 #include <string>
-#include <chrono>
+#include <time.h>
+#include <unistd.h>
+#include <sstream>
 using namespace std;
 
 void matrixMultiply(double*, double*, int, int, int, int, double*, int, int);
@@ -14,6 +15,28 @@ double* preX;
 double* threadPartialOutMM;
 int targetDimension = 3;
 int blockSize = 64;
+
+template <typename T>
+  string NumberToString ( T Number )
+  {
+     ostringstream ss;
+     ss << Number;
+     return ss.str();
+  }
+double currentTimeInSeconds(void)
+{
+
+    int flag;
+    clockid_t cid = CLOCK_REALTIME; // CLOCK_MONOTONE might be better
+    struct timespec tp;
+    double timing;
+
+    flag = clock_gettime(cid, &tp);
+    if (flag == 0) timing = tp.tv_sec + 1.0e-9*tp.tv_nsec;
+    else           timing = -17.0;         // If timer failed, return non-valid time
+
+    return(timing);
+};
 
 int main(int argc, char* argv[])
 {
@@ -146,9 +169,9 @@ void bcReplica(int threadCount, int iterations, int globalColCount, int rowCount
 			//MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 			//cout << ("Rank: " + to_string(rank) + " Thread: " + to_string(tid) + " Total Threads: " + to_string(num_t) +"\n");
 
-			auto t = std::chrono::system_clock::now();
+			double t = currentTimeInSeconds();
 			matrixMultiply(threadPartialBofZ, preX, rowCountPerUnit, targetDimension, globalColCount, blockSize, threadPartialOutMM, tid*pairCountLocal, tid*pointComponentCountLocal);
-			threadTimes[tid] += (std::chrono::system_clock::now() - t).count();
+			threadTimes[tid] += (currentTimeInSeconds() - t);
 		}
 	}
 
@@ -159,7 +182,7 @@ void bcReplica(int threadCount, int iterations, int globalColCount, int rowCount
 	/*if (rank == 0) {*/
 		for (i = 0; i < threadCount; ++i) {
 			threadTimes[i] = threadTimes[i] / iterations;
-			//cout << "tid: " + to_string((long long)i) + "  " + to_string((long double)threadTimes[i]) + "\n";
+			//cout << "tid: " + NumberToString(i) + "  " + NumberToString(threadTimes[i]) + "\n";
 		}
 	/*}*/
 
@@ -168,7 +191,7 @@ void bcReplica(int threadCount, int iterations, int globalColCount, int rowCount
 
 	if (rank == 0) {
 		for (i = 0; i < size*threadCount; ++i) {
-			cout << "rank: " + to_string((long long)(i / threadCount)) + " tid: " + to_string((long long)(i % threadCount)) + " time: " + to_string((long double)timeDistribution[i]) + "\n";
+			cout << "rank: " + NumberToString((i / threadCount)) + " tid: " + NumberToString((i % threadCount)) + " time: " + NumberToString(timeDistribution[i]) + "\n";
 		}
 	}
 

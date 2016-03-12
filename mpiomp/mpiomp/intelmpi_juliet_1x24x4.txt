@@ -1,0 +1,125 @@
+procs itr 1 rowpu 1000 cols 10000
+mpsvars.sh: Warning: Hardware events collection is disabled by default. To enable it, run mpsvars.sh with --vtune (recommended) or --papi option.
+Copyright (C) 2009-2016 Intel Corporation. All rights reserved.
+Intel(R) Inspector XE 2016 (build 450824)
+Copyright (C) 2009-2015 Intel Corporation. All rights reserved.
+Intel(R) VTune(TM) Amplifier XE 2016 (build 444464)
+Copyright (C) 2009-2016 Intel Corporation. All rights reserved.
+Intel(R) Advisor XE 2016 (build 450722)
+mpsvars.sh: Warning: Hardware events collection is disabled by default. To enable it, run mpsvars.sh with --vtune (recommended) or --papi option.
+Copyright (C) 2009-2016 Intel Corporation. All rights reserved.
+Intel(R) Inspector XE 2016 (build 450824)
+mpsvars.sh: Warning: Hardware events collection is disabled by default. To enable it, run mpsvars.sh with --vtune (recommended) or --papi option.
+Copyright (C) 2009-2015 Intel Corporation. All rights reserved.
+Intel(R) VTune(TM) Amplifier XE 2016 (build 444464)
+Copyright (C) 2009-2016 Intel Corporation. All rights reserved.
+Intel(R) Inspector XE 2016 (build 450824)
+Copyright (C) 2009-2016 Intel Corporation. All rights reserved.
+Intel(R) Advisor XE 2016 (build 450722)
+Copyright (C) 2009-2015 Intel Corporation. All rights reserved.
+Intel(R) VTune(TM) Amplifier XE 2016 (build 444464)
+Copyright (C) 2009-2016 Intel Corporation. All rights reserved.
+Intel(R) Advisor XE 2016 (build 450722)
+mpsvars.sh: Warning: Hardware events collection is disabled by default. To enable it, run mpsvars.sh with --vtune (recommended) or --papi option.
+Copyright (C) 2009-2016 Intel Corporation. All rights reserved.
+Intel(R) Inspector XE 2016 (build 450824)
+Copyright (C) 2009-2015 Intel Corporation. All rights reserved.
+Intel(R) VTune(TM) Amplifier XE 2016 (build 444464)
+Copyright (C) 2009-2016 Intel Corporation. All rights reserved.
+Intel(R) Advisor XE 2016 (build 450722)
+rank: 0 tid: 0 time: 255547.000000
+rank: 1 tid: 0 time: 256666.000000
+rank: 2 tid: 0 time: 339291.000000
+rank: 3 tid: 0 time: 255646.000000
+rank: 4 tid: 0 time: 255507.000000
+rank: 5 tid: 0 time: 255430.000000
+rank: 6 tid: 0 time: 255181.000000
+rank: 7 tid: 0 time: 255248.000000
+rank: 8 tid: 0 time: 339053.000000
+rank: 9 tid: 0 time: 255378.000000
+rank: 10 tid: 0 time: 255032.000000
+rank: 11 tid: 0 time: 255205.000000
+rank: 12 tid: 0 time: 256380.000000
+rank: 13 tid: 0 time: 255862.000000
+rank: 14 tid: 0 time: 256282.000000
+rank: 15 tid: 0 time: 256185.000000
+rank: 16 tid: 0 time: 256217.000000
+rank: 17 tid: 0 time: 255762.000000
+rank: 18 tid: 0 time: 255314.000000
+rank: 19 tid: 0 time: 255942.000000
+rank: 20 tid: 0 time: 339186.000000
+rank: 21 tid: 0 time: 255431.000000
+rank: 22 tid: 0 time: 338390.000000
+rank: 23 tid: 0 time: 255139.000000
+rank: 24 tid: 0 time: 255592.000000
+rank: 25 tid: 0 time: 255835.000000
+rank: 26 tid: 0 time: 313187.000000
+rank: 27 tid: 0 time: 255483.000000
+rank: 28 tid: 0 time: 255463.000000
+rank: 29 tid: 0 time: 255863.000000
+rank: 30 tid: 0 time: 337352.000000
+rank: 31 tid: 0 time: 255239.000000
+rank: 32 tid: 0 time: 255005.000000
+rank: 33 tid: 0 time: 255080.000000
+rank: 34 tid: 0 time: 338295.000000
+rank: 35 tid: 0 time: 255280.000000
+rank: 36 tid: 0 time: 256305.000000
+rank: 37 tid: 0 time: 255608.000000
+rank: 38 tid: 0 time: 255890.000000
+rank: 39 tid: 0 time: 255638.000000
+rank: 40 tid: 0 time: 255963.000000
+rank: 41 tid: 0 time: 255358.000000
+rank: 42 tid: 0 time: 255340.000000
+rank: 43 tid: 0 time: 255365.000000
+rank: 44 tid: 0 time: 337520.000000
+rank: 45 tid: 0 time: 255477.000000
+rank: 46 tid: 0 time: 255787.000000
+rank: 47 tid: 0 time: 255586.000000
+rank: 48 tid: 0 time: 254936.000000
+rank: 49 tid: 0 time: 255235.000000
+rank: 50 tid: 0 time: 255146.000000
+rank: 51 tid: 0 time: 255296.000000
+rank: 52 tid: 0 time: 337751.000000
+rank: 53 tid: 0 time: 255081.000000
+rank: 54 tid: 0 time: 255136.000000
+rank: 55 tid: 0 time: 255673.000000
+rank: 56 tid: 0 time: 254756.000000
+rank: 57 tid: 0 time: 254853.000000
+rank: 58 tid: 0 time: 336902.000000
+rank: 59 tid: 0 time: 254749.000000
+rank: 60 tid: 0 time: 338980.000000
+rank: 61 tid: 0 time: 255801.000000
+rank: 62 tid: 0 time: 339825.000000
+rank: 63 tid: 0 time: 256479.000000
+rank: 64 tid: 0 time: 255480.000000
+rank: 65 tid: 0 time: 255260.000000
+rank: 66 tid: 0 time: 256488.000000
+rank: 67 tid: 0 time: 255036.000000
+rank: 68 tid: 0 time: 256317.000000
+rank: 69 tid: 0 time: 255516.000000
+rank: 70 tid: 0 time: 255498.000000
+rank: 71 tid: 0 time: 255227.000000
+rank: 72 tid: 0 time: 255381.000000
+rank: 73 tid: 0 time: 255815.000000
+rank: 74 tid: 0 time: 255679.000000
+rank: 75 tid: 0 time: 254951.000000
+rank: 76 tid: 0 time: 255090.000000
+rank: 77 tid: 0 time: 255147.000000
+rank: 78 tid: 0 time: 254724.000000
+rank: 79 tid: 0 time: 254446.000000
+rank: 80 tid: 0 time: 254870.000000
+rank: 81 tid: 0 time: 254614.000000
+rank: 82 tid: 0 time: 254862.000000
+rank: 83 tid: 0 time: 254621.000000
+rank: 84 tid: 0 time: 255053.000000
+rank: 85 tid: 0 time: 255231.000000
+rank: 86 tid: 0 time: 255137.000000
+rank: 87 tid: 0 time: 255519.000000
+rank: 88 tid: 0 time: 255502.000000
+rank: 89 tid: 0 time: 255034.000000
+rank: 90 tid: 0 time: 255575.000000
+rank: 91 tid: 0 time: 258040.000000
+rank: 92 tid: 0 time: 255267.000000
+rank: 93 tid: 0 time: 255340.000000
+rank: 94 tid: 0 time: 255245.000000
+rank: 95 tid: 0 time: 255323.000000

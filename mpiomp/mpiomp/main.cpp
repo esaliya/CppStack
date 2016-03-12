@@ -6,6 +6,7 @@
 #include <chrono>
 using namespace std;
 
+double randomSqrt(double);
 void matrixMultiply(double*, double*, int, int, int, int, double*, int, int);
 void bcReplica(int, int, int, int);
 
@@ -37,6 +38,18 @@ int main(int argc, char* argv[])
 	
 	MPI_Finalize();
 	return 0;
+}
+
+double randomSqrt(double v)
+{
+	int i;
+	int x = 100000;
+	for (i = 0; i < x*x; ++i)
+	{
+		v += rand()*rand();
+		v = sqrt(v*v);
+	}
+	return v;
 }
 
 void matrixMultiply(double* A, double* B, int aHeight, int bWidth, int comm, int bz, double* C, int threadAOffset, int threadCOffset) {
@@ -121,6 +134,7 @@ void bcReplica(int threadCount, int iterations, int globalColCount, int rowCount
 		threadTimes[i] = 0.0;
 	}
 	
+	double v = 0.0;
 	for (itr = 0; itr < iterations; ++itr) {
 		for (i = 0; i < pointComponentCountGlobal; ++i) {
 			preX[i] = (double)rand() / (double)RAND_MAX;
@@ -147,7 +161,8 @@ void bcReplica(int threadCount, int iterations, int globalColCount, int rowCount
 			//cout << ("Rank: " + to_string(rank) + " Thread: " + to_string(tid) + " Total Threads: " + to_string(num_t) +"\n");
 
 			auto t = std::chrono::system_clock::now();
-			matrixMultiply(threadPartialBofZ, preX, rowCountPerUnit, targetDimension, globalColCount, blockSize, threadPartialOutMM, tid*pairCountLocal, tid*pointComponentCountLocal);
+			// matrixMultiply(threadPartialBofZ, preX, rowCountPerUnit, targetDimension, globalColCount, blockSize, threadPartialOutMM, tid*pairCountLocal, tid*pointComponentCountLocal);
+			v = randomSqrt(v);
 			threadTimes[tid] += (std::chrono::system_clock::now() - t).count();
 		}
 	}

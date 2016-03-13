@@ -4,6 +4,7 @@
 #include <omp.h>
 #include <string>
 #include <chrono>
+#include <math.h>
 using namespace std;
 
 double random_sqrt(double, int);
@@ -65,11 +66,10 @@ void sqrt_bench(int threadCount, int iterations, int skip, int load) {
 
 			auto t = std::chrono::system_clock::now();
 			v = random_sqrt(v, load);
-			if (itr < skip)
+			if (itr > skip)
 			{
-				continue;
+				threadTimes[tid] += (std::chrono::system_clock::now() - t).count();
 			}
-			threadTimes[tid] += (std::chrono::system_clock::now() - t).count();
 		}
 	}
 

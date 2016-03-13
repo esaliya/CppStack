@@ -1,10 +1,10 @@
 #!/bin/bash
 hosts=nodes.txt
-nodes=4
+nodes=1
 ppn=$2
 tpp=$1
 
-itr=1
+itr=10
 rowperunit=1000
 colcount=10000
 

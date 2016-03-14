@@ -168,7 +168,8 @@ void bcReplica(int threadCount, int iterations, int globalColCount, int rowCount
 
 	if (rank == 0) {
 		for (i = 0; i < size*threadCount; ++i) {
-			cout << "rank: " + to_string((long long)(i / threadCount)) + " tid: " + to_string((long long)(i % threadCount)) + " time: " + to_string((long double)timeDistribution[i]) + "\n";
+			//cout << "rank: " + to_string((long long)(i / threadCount)) + " tid: " + to_string((long long)(i % threadCount)) + " time: " + to_string((long double)timeDistribution[i]) + "\n";
+			cout << to_string((long long)(i / threadCount)) + "\t" + to_string((long long)(i % threadCount)) + "\t" + to_string((long double)timeDistribution[i]) + "\n";
 		}
 	}
 

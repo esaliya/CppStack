@@ -54,6 +54,7 @@ target/
 *.swo
 *.swp
 *.iml
+*.opendb
 
 
 # Visual C++ cache files

@@ -7,7 +7,7 @@
 #include <math.h>
 using namespace std;
 
-double random_sqrt(double, int, double*);
+double random_sqrt(volatile double, int, volatile double*);
 void sqrt_bench(int, int, int, int);
 
 int main(int argc, char* argv[])
@@ -34,7 +34,7 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-double random_sqrt(double v, int l, double* time)
+double random_sqrt(volatile double v, int l, volatile double* time)
 {
 	double t = omp_get_wtime();
 	int i;
@@ -57,22 +57,33 @@ void sqrt_bench(int threadCount, int iterations, int skip, int load) {
 	}
 
 	int itr;
-	double v = 0.0;
-	for (itr = 0; itr < i; ++itr) {
-		omp_set_num_threads(threadCount);
-
-#pragma omp parallel
-		{
-			int num_t = omp_get_num_threads();
-			int tid = omp_get_thread_num();
-			
-			double compute_only_time= 0.0;
-			v = random_sqrt(v, load, &compute_only_time);
-			/* let's not worry about skips now */
-			//if (itr > skip)
+	if (threadCount > 0)
+	{
+	
+		for (itr = 0; itr < i; ++itr) {
+			omp_set_num_threads(threadCount);
+			#pragma omp parallel shared(threadTimes)
 			{
+				int num_t = omp_get_num_threads();
+				int tid = omp_get_thread_num();
+				
+				volatile double compute_only_time= 0.0;
+				volatile double v = 0.0;
+				v = random_sqrt(v, load, &compute_only_time);
 				threadTimes[tid] += compute_only_time;
 			}
+		}
+	}	
+	else
+	{
+		for (itr = 0; itr < i; ++itr) 
+		{
+			int num_t = 1; 
+			int tid = 0;
+		
+			double compute_only_time= 0.0;
+			double v = random_sqrt(v, load, &compute_only_time);
+			threadTimes[tid] += compute_only_time;
 		}
 	}
 

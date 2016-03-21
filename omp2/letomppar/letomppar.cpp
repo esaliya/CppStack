@@ -140,7 +140,7 @@ void bcReplica(int threadCount, int iterations, int globalColCount, int rowCount
 		int k;
 
 		double* threadTimes = (double*)malloc(sizeof(double)*1);
-		for (i = 0; i < threadCount; ++i) {
+		for (i = 0; i < 1; ++i) {
 			threadTimes[i] = 0.0;
 		}
 

@@ -146,12 +146,12 @@ void bcReplica(int threadCount, int iterations, int globalColCount, int rowCount
 
 		double v = 0.0;
 		for (i = 0; i < pointComponentCountGlobal; ++i) {
-			preX[i] = (double)rand() / (double)RAND_MAX;
+			preX[i] = (double)i / (double)pointComponentCountGlobal;
 		}
 
 		int pairCountAllThreads = 1*pairCountLocal;
 		for (k = 0; k < pairCountAllThreads; ++k) {
-			threadPartialBofZ[k] = (double)rand() / (double)RAND_MAX;
+			threadPartialBofZ[k] = (double)i / (double)pairCountAllThreads;
 		}
 
 		int pointComponentCountAllThreads = 1*pointComponentCountLocal;

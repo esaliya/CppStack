@@ -119,76 +119,74 @@ void matrixMultiply(double* A, double* B, int aHeight, int bWidth, int comm, int
 }
 
 void bcReplica(int threadCount, int iterations, int globalColCount, int rowCountPerUnit) {
-	int pointComponentCountGlobal = globalColCount * targetDimension;
-	int pointComponentCountLocal = rowCountPerUnit * targetDimension;
-	preX = (double*)malloc(sizeof(double) * pointComponentCountGlobal);
-	int i;
+	omp_set_num_threads(threadCount);
 
-	int pairCountLocal = rowCountPerUnit * globalColCount;
-	threadPartialBofZ = (double*)malloc(sizeof(double) * threadCount * pairCountLocal);
-	threadPartialOutMM = (double*)malloc(sizeof(double*)*threadCount*pointComponentCountLocal);
-	int j;
+#pragma omp parallel
+	{
+		int pointComponentCountGlobal = globalColCount * targetDimension;
+		int pointComponentCountLocal = rowCountPerUnit * targetDimension;
+		preX = (double*)malloc(sizeof(double) * pointComponentCountGlobal);
+		int i;
+
+		int pairCountLocal = rowCountPerUnit * globalColCount;
+		threadPartialBofZ = (double*)malloc(sizeof(double) * 1 * pairCountLocal);
+		threadPartialOutMM = (double*)malloc(sizeof(double*) * 1 * pointComponentCountLocal);
+		int j;
 
 
-	double totalTime = 0.0;
+		double totalTime = 0.0;
 
-	int itr;
-	int k;
+		int itr;
+		int k;
 
-	double* threadTimes = (double*)malloc(sizeof(double)*threadCount);
-	for (i = 0; i < threadCount; ++i) {
-		threadTimes[i] = 0.0;
-	}
+		double* threadTimes = (double*)malloc(sizeof(double)*1);
+		for (i = 0; i < threadCount; ++i) {
+			threadTimes[i] = 0.0;
+		}
 
-	double v = 0.0;
-	//for (itr = 0; itr < iterations; ++itr) {
+		double v = 0.0;
 		for (i = 0; i < pointComponentCountGlobal; ++i) {
 			preX[i] = (double)rand() / (double)RAND_MAX;
 		}
 
-		int pairCountAllThreads = threadCount*pairCountLocal;
+		int pairCountAllThreads = 1*pairCountLocal;
 		for (k = 0; k < pairCountAllThreads; ++k) {
 			threadPartialBofZ[k] = (double)rand() / (double)RAND_MAX;
 		}
 
-		int pointComponentCountAllThreads = threadCount*pointComponentCountLocal;
+		int pointComponentCountAllThreads = 1*pointComponentCountLocal;
 		for (k = 0; k < pointComponentCountAllThreads; ++k) {
 			threadPartialOutMM[k] = (double)0.0;
 		}
 
-		omp_set_num_threads(threadCount);
 
-	for (itr = 0; itr < iterations; ++itr) {
-#pragma omp parallel
-		{
+
+		for (itr = 0; itr < iterations; ++itr) {
 			int num_t = omp_get_num_threads();
 			int tid = omp_get_thread_num();
-			
+
 			//auto t = high_resolution_clock::now();
-			matrixMultiply(threadPartialBofZ, preX, rowCountPerUnit, targetDimension, globalColCount, blockSize, threadPartialOutMM, tid*pairCountLocal, tid*pointComponentCountLocal);
+			matrixMultiply(threadPartialBofZ, preX, rowCountPerUnit, targetDimension, globalColCount, blockSize, threadPartialOutMM, 0*pairCountLocal, 0*pointComponentCountLocal);
 			//threadTimes[tid] += duration_cast<milliseconds>(high_resolution_clock::now() - t).count();
 		}
-	}
 
-	int rank;
-	int size;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	MPI_Comm_size(MPI_COMM_WORLD, &size);
-	
-	for (i = 0; i < threadCount; ++i) 
-	{
-		threadTimes[i] = threadTimes[i] / iterations;
-	}
+		/*int rank;
+		int size;
+		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+		MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-	double* timeDistribution = (double*)(malloc(sizeof(double)*size*threadCount));
-	MPI_Gather(threadTimes, threadCount, MPI_DOUBLE, timeDistribution, threadCount, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-	if (rank == 0) {
-		for (i = 0; i < size*threadCount; ++i) {
-			cout << "rank: " + to_string((long long)(i / threadCount)) + " tid: " + to_string((long long)(i % threadCount)) + " time: " + to_string((long double)timeDistribution[i]) + "\n";
+		for (i = 0; i < threadCount; ++i)
+		{
+			threadTimes[i] = threadTimes[i] / iterations;
 		}
+
+		double* timeDistribution = (double*)(malloc(sizeof(double)*size*threadCount));
+		MPI_Gather(threadTimes, threadCount, MPI_DOUBLE, timeDistribution, threadCount, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+		if (rank == 0) {
+			for (i = 0; i < size*threadCount; ++i) {
+				cout << "rank: " + to_string((long long)(i / threadCount)) + " tid: " + to_string((long long)(i % threadCount)) + " time: " + to_string((long double)timeDistribution[i]) + "\n";
+			}
+		}*/
 	}
-
-
-
 }

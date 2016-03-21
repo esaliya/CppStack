@@ -141,7 +141,7 @@ void bcReplica(int threadCount, int iterations, int globalColCount, int rowCount
 	}
 
 	double v = 0.0;
-	for (itr = 0; itr < iterations; ++itr) {
+	//for (itr = 0; itr < iterations; ++itr) {
 		for (i = 0; i < pointComponentCountGlobal; ++i) {
 			preX[i] = (double)rand() / (double)RAND_MAX;
 		}
@@ -158,14 +158,15 @@ void bcReplica(int threadCount, int iterations, int globalColCount, int rowCount
 
 		omp_set_num_threads(threadCount);
 
+	for (itr = 0; itr < iterations; ++itr) {
 #pragma omp parallel
 		{
 			int num_t = omp_get_num_threads();
 			int tid = omp_get_thread_num();
 			
-			auto t = high_resolution_clock::now();
+			//auto t = high_resolution_clock::now();
 			matrixMultiply(threadPartialBofZ, preX, rowCountPerUnit, targetDimension, globalColCount, blockSize, threadPartialOutMM, tid*pairCountLocal, tid*pointComponentCountLocal);
-			threadTimes[tid] += duration_cast<milliseconds>(high_resolution_clock::now() - t).count();
+			//threadTimes[tid] += duration_cast<milliseconds>(high_resolution_clock::now() - t).count();
 		}
 	}
 

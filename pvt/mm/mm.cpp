@@ -2,8 +2,11 @@
 #include<mpi.h>
 #include<omp.h>
 #include<cstdlib>
+#include <chrono>
+#include <ctime>
 
 using namespace std;
+using namespace std::chrono;
 void block_matrix_multiply(double* A, double* B, int a_rows, int b_cols, int ab_commn, int block_size, double* C);
 
 int main(int argc, char *argv[])
@@ -37,6 +40,7 @@ int main(int argc, char *argv[])
 #pragma omp parallel
 	{
 		int num_threads = omp_get_num_threads();
+		int thread_id = omp_get_thread_num();
 		if (thread_count != num_threads)
 		{
 			cout << "Thread count " << thread_count << " mismatch with omp thread count " << num_threads << "\n";
@@ -59,8 +63,19 @@ int main(int argc, char *argv[])
 		{
 			C[i] = 0.0;
 		}
+		time_point<system_clock> start, end;
+		start = system_clock::now();
+		for (int itr = 0; itr < iterations; ++itr)
+		{
+			block_matrix_multiply(A, B, a_rows, b_cols, ab_comn, block_size, C);
+		}
+		end = system_clock::now();
 
-		block_matrix_multiply(A, B, a_rows, b_cols, ab_comn, block_size, C);
+		duration<double> elapsed_seconds = end - start;
+		time_t end_time = system_clock::to_time_t(end);
+
+		cout << "thread " << thread_id << "finished computation at " << ctime(&end_time)
+			<< "elapsed time: " << elapsed_seconds.count() << "s\n";
 
 	}
 	MPI_Finalize();

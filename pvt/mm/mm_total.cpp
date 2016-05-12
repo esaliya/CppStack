@@ -30,22 +30,32 @@ void mm_lrt_global(int rank, int thread_count, int iterations, int a_rows, int b
 		C[i] = 0.0;
 	}
 
-	omp_set_num_threads(thread_count);
-#pragma omp parallel
+	if (thread_count > 1)
 	{
-		int num_threads = omp_get_num_threads();
-		int thread_id = omp_get_thread_num();
-		if (thread_count != num_threads)
+		omp_set_num_threads(thread_count);
+#pragma omp parallel
 		{
-			cout << "Thread count " << thread_count << " mismatch with omp thread count " << num_threads << "\n";
+			int num_threads = omp_get_num_threads();
+			int thread_id = omp_get_thread_num();
+			if (thread_count != num_threads)
+			{
+				cout << "Thread count " << thread_count << " mismatch with omp thread count " << num_threads << "\n";
+			}
+
+
+			for (int itr = 0; itr < iterations; ++itr)
+			{
+				block_matrix_multiply_with_thread_offset(A, B, a_rows, b_cols, ab_comn, block_size, C, thread_id);
+			}
+
 		}
-
-
+	} 
+	else
+	{
 		for (int itr = 0; itr < iterations; ++itr)
 		{
-			block_matrix_multiply_with_thread_offset(A, B, a_rows, b_cols, ab_comn, block_size, C, thread_id);
+			block_matrix_multiply_with_thread_offset(A, B, a_rows, b_cols, ab_comn, block_size, C, 0);
 		}
-		
 	}
 
 	free(A);
@@ -55,7 +65,7 @@ void mm_lrt_global(int rank, int thread_count, int iterations, int a_rows, int b
 
 void mm_fj_global(int rank, int thread_count, int iterations, int a_rows, int b_cols, int ab_comn, int block_size)
 {
-	omp_set_num_threads(thread_count);
+	
 
 	double* A = static_cast<double*>(malloc(sizeof(double)*a_rows*ab_comn*thread_count));
 	double* B = static_cast<double*>(malloc(sizeof(double)*b_cols*ab_comn*thread_count));
@@ -77,17 +87,25 @@ void mm_fj_global(int rank, int thread_count, int iterations, int a_rows, int b_
 
 	for (int itr = 0; itr < iterations; ++itr)
 	{
-#pragma omp parallel
+		if (thread_count > 1)
 		{
-			int num_threads = omp_get_num_threads();
-			int thread_id = omp_get_thread_num();
-			if (thread_count != num_threads)
+			omp_set_num_threads(thread_count);
+#pragma omp parallel
 			{
-				cout << "Thread count " << thread_count << " mismatch with omp thread count " << num_threads << "\n";
+				int num_threads = omp_get_num_threads();
+				int thread_id = omp_get_thread_num();
+				if (thread_count != num_threads)
+				{
+					cout << "Thread count " << thread_count << " mismatch with omp thread count " << num_threads << "\n";
+				}
+
+
+				block_matrix_multiply_with_thread_offset(A, B, a_rows, b_cols, ab_comn, block_size, C, thread_id);
 			}
-
-
-			block_matrix_multiply_with_thread_offset(A, B, a_rows, b_cols, ab_comn, block_size, C, thread_id);
+		} 
+		else
+		{
+			block_matrix_multiply_with_thread_offset(A, B, a_rows, b_cols, ab_comn, block_size, C, 0);
 		}
 	}
 

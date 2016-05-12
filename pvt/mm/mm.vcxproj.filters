@@ -17,11 +17,11 @@
     <ClCompile Include="mm.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="mm_worker.cpp">
+    <ClCompile Include="mm_total.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="mm_worker.h" />
+    <ClInclude Include="mm.h" />
   </ItemGroup>
 </Project>

@@ -1,3 +1,4 @@
+#include "mm.h"
 #include <iostream>
 #include<mpi.h>
 #include<omp.h>
@@ -8,9 +9,6 @@
 
 using namespace std;
 using namespace std::chrono;
-
-void block_matrix_multiply(double* A, double* B, int a_rows, int b_cols, int ab_commn, int block_size, double* C);
-void block_matrix_multiply_with_thread_offset(double* A, double* B, int aHeight, int b_width, int comm, int bz, double* C, int thread_id);
 
 void mm_lrt_global(int rank, int thread_count, int iterations, int a_rows, int b_cols, int ab_comn, int block_size)
 {
@@ -42,7 +40,7 @@ void mm_lrt_global(int rank, int thread_count, int iterations, int a_rows, int b
 			cout << "Thread count " << thread_count << " mismatch with omp thread count " << num_threads << "\n";
 		}
 
-		
+
 		time_point<system_clock> start, end;
 		start = system_clock::now();
 		for (int itr = 0; itr < iterations; ++itr)
@@ -78,7 +76,7 @@ void mm_lrt_local(int rank, int thread_count, int iterations, int a_rows, int b_
 		double* B = static_cast<double*>(malloc(sizeof(double)*b_cols*ab_comn));
 		double* C = static_cast<double*>(malloc(sizeof(double)*a_rows*b_cols));
 
-		
+
 		for (int i = 0; i < a_rows*ab_comn; ++i)
 		{
 			A[i] = ((i & 1) == 0) ? (0.9999995 / 1.0000023) : (1.0000023 / 0.9999995);
@@ -141,24 +139,24 @@ void mm_fj_global(int rank, int thread_count, int iterations, int a_rows, int b_
 	for (int itr = 0; itr < iterations; ++itr)
 	{
 #pragma omp parallel
+	{
+		int num_threads = omp_get_num_threads();
+		int thread_id = omp_get_thread_num();
+		if (thread_count != num_threads)
 		{
-			int num_threads = omp_get_num_threads();
-			int thread_id = omp_get_thread_num();
-			if (thread_count != num_threads)
-			{
-				cout << "Thread count " << thread_count << " mismatch with omp thread count " << num_threads << "\n";
-			}
-
-			
-#pragma omp barrier
-			time_point<system_clock> start, end;
-			start = system_clock::now();
-			block_matrix_multiply_with_thread_offset(A, B, a_rows, b_cols, ab_comn, block_size, C, thread_id);
-			end = system_clock::now();
-			duration<double> elapsed_seconds = end - start;
-#pragma omp barrier
-			times[thread_id] += elapsed_seconds.count();
+			cout << "Thread count " << thread_count << " mismatch with omp thread count " << num_threads << "\n";
 		}
+
+
+#pragma omp barrier
+		time_point<system_clock> start, end;
+		start = system_clock::now();
+		block_matrix_multiply_with_thread_offset(A, B, a_rows, b_cols, ab_comn, block_size, C, thread_id);
+		end = system_clock::now();
+		duration<double> elapsed_seconds = end - start;
+#pragma omp barrier
+		times[thread_id] += elapsed_seconds.count();
+	}
 	}
 
 	free(A);
@@ -183,45 +181,45 @@ void mm_fj_local(int rank, int thread_count, int iterations, int a_rows, int b_c
 	for (int itr = 0; itr < iterations; ++itr)
 	{
 #pragma omp parallel
+	{
+		int num_threads = omp_get_num_threads();
+		int thread_id = omp_get_thread_num();
+		if (thread_count != num_threads)
 		{
-			int num_threads = omp_get_num_threads();
-			int thread_id = omp_get_thread_num();
-			if (thread_count != num_threads)
-			{
-				cout << "Thread count " << thread_count << " mismatch with omp thread count " << num_threads << "\n";
-			}
-
-			double* A = static_cast<double*>(malloc(sizeof(double) * a_rows * ab_comn));
-			double* B = static_cast<double*>(malloc(sizeof(double) * b_cols * ab_comn));
-			double* C = static_cast<double*>(malloc(sizeof(double) * a_rows * b_cols));
-
-
-			for (int i = 0; i < a_rows * ab_comn; ++i)
-			{
-				A[i] = ((i & 1) == 0) ? (0.9999995 / 1.0000023) : (1.0000023 / 0.9999995);
-			}
-			for (int i = 0; i < b_cols * ab_comn; ++i)
-			{
-				B[i] = ((i & 1) == 0) ? (1.0000023 / 0.9999995) : (0.9999995 / 1.0000023);
-			}
-			for (int i = 0; i < a_rows * b_cols; ++i)
-			{
-				C[i] = 0.0;
-			}
-#pragma omp barrier
-			time_point<system_clock> start, end;
-			start = system_clock::now();
-			block_matrix_multiply(A, B, a_rows, b_cols, ab_comn, block_size, C);
-			end = system_clock::now();
-			duration<double> elapsed_seconds = end - start;
-#pragma omp barrier
-			times[thread_id] += elapsed_seconds.count();
-			
-
-			free(A);
-			free(B);
-			free(C);
+			cout << "Thread count " << thread_count << " mismatch with omp thread count " << num_threads << "\n";
 		}
+
+		double* A = static_cast<double*>(malloc(sizeof(double) * a_rows * ab_comn));
+		double* B = static_cast<double*>(malloc(sizeof(double) * b_cols * ab_comn));
+		double* C = static_cast<double*>(malloc(sizeof(double) * a_rows * b_cols));
+
+
+		for (int i = 0; i < a_rows * ab_comn; ++i)
+		{
+			A[i] = ((i & 1) == 0) ? (0.9999995 / 1.0000023) : (1.0000023 / 0.9999995);
+		}
+		for (int i = 0; i < b_cols * ab_comn; ++i)
+		{
+			B[i] = ((i & 1) == 0) ? (1.0000023 / 0.9999995) : (0.9999995 / 1.0000023);
+		}
+		for (int i = 0; i < a_rows * b_cols; ++i)
+		{
+			C[i] = 0.0;
+		}
+#pragma omp barrier
+		time_point<system_clock> start, end;
+		start = system_clock::now();
+		block_matrix_multiply(A, B, a_rows, b_cols, ab_comn, block_size, C);
+		end = system_clock::now();
+		duration<double> elapsed_seconds = end - start;
+#pragma omp barrier
+		times[thread_id] += elapsed_seconds.count();
+
+
+		free(A);
+		free(B);
+		free(C);
+	}
 	}
 	for (int i = 0; i < thread_count; ++i)
 	{
@@ -271,143 +269,11 @@ int main(int argc, char *argv[])
 	else if (lrt == 1 && local == 0)
 	{
 		mm_lrt_global(rank, thread_count, iterations, a_rows, b_cols, ab_comn, block_size);
-	} else if (lrt == 0 && local == 0)
+	}
+	else if (lrt == 0 && local == 0)
 	{
 		mm_fj_global(rank, thread_count, iterations, a_rows, b_cols, ab_comn, block_size);
 	}
 	MPI_Finalize();
-    return 0;
-}
-
-void block_matrix_multiply(
-	double* A, double* B, int a_rows, int b_cols, int ab_commn, int block_size, double* C)
-{
-	int a_height_blocks = a_rows / block_size; // size = Height of A
-	int a_last_block_height = a_rows - (a_height_blocks * block_size);
-	if (a_last_block_height > 0)
-	{
-		a_height_blocks++;
-	}
-
-	int b_width_blocks = b_cols / block_size; // size = Width of B
-	int b_last_block_width = b_cols - (b_width_blocks * block_size);
-	if (b_last_block_width > 0)
-	{
-		b_width_blocks++;
-	}
-
-	int commn_blocks = ab_commn / block_size; // size = Width of A or Height of B
-	int commLastBlockWidth = ab_commn - (commn_blocks * block_size);
-	if (commLastBlockWidth > 0)
-	{
-		commn_blocks++;
-	}
-
-	int a_block_height = block_size;
-	int b_block_width;
-	int comm_block_width;
-
-	double k_tmp;
-	int i_offset;
-	for (int ib = 0; ib < a_height_blocks; ib++)
-	{
-		if (a_last_block_height > 0 && ib == (a_height_blocks - 1))
-		{
-			a_block_height = a_last_block_height;
-		}
-		b_block_width = comm_block_width = block_size;
-		for (int jb = 0; jb < b_width_blocks; jb++)
-		{
-			if (b_last_block_width > 0 && jb == (b_width_blocks - 1))
-			{
-				b_block_width = b_last_block_width;
-			}
-			comm_block_width = block_size;
-			for (int kb = 0; kb < commn_blocks; kb++)
-			{
-				if (commLastBlockWidth > 0 && kb == (commn_blocks - 1))
-				{
-					comm_block_width = commLastBlockWidth;
-				}
-
-				for (int i = ib * block_size; i < (ib * block_size) + a_block_height; i++)
-				{
-					i_offset = i * b_cols;
-					for (int j = jb * block_size; j < (jb * block_size) + b_block_width;
-					     j++)
-					{
-						for (int k = kb * block_size;
-						     k < (kb * block_size) + comm_block_width; k++)
-						{
-							k_tmp = B[k * b_cols + j];
-							if (A[i*ab_commn+k] != 0 && k_tmp != 0)
-							{
-								C[i_offset + j] += A[i*ab_commn + k] * k_tmp;
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-}
-
-void block_matrix_multiply_with_thread_offset(double* A, double* B, int a_rows, int b_cols, int ab_comn, int block_size, double* C, int thread_id) {
-
-	int a_height_blocks = a_rows / block_size; // size = Height of A
-	int a_last_block_height = a_rows - (a_height_blocks * block_size);
-	if (a_last_block_height > 0) {
-		a_height_blocks++;
-	}
-
-	int b_width_blocks = b_cols / block_size; // size = Width of B
-	int b_last_block_width = b_cols - (b_width_blocks * block_size);
-	if (b_last_block_width > 0) {
-		b_width_blocks++;
-	}
-
-	int commn_blocks = ab_comn / block_size; // size = Width of A or Height of B
-	int comm_last_block_width = ab_comn - (commn_blocks * block_size);
-	if (comm_last_block_width > 0) {
-		commn_blocks++;
-	}
-
-	int a_block_height = block_size;
-	int b_block_width;
-	int comm_block_width;
-
-	int ib, jb, kb, i, j, k;
-	int i_a_row_offset, k_b_row_offset, i_c_row_offset;
-	for (ib = 0; ib < a_height_blocks; ib++) {
-		if (a_last_block_height > 0 && ib == (a_height_blocks - 1)) {
-			a_block_height = a_last_block_height;
-		}
-		b_block_width = block_size;
-		for (jb = 0; jb < b_width_blocks; jb++) {
-			if (b_last_block_width > 0 && jb == (b_width_blocks - 1)) {
-				b_block_width = b_last_block_width;
-			}
-			comm_block_width = block_size;
-			for (kb = 0; kb < commn_blocks; kb++) {
-				if (comm_last_block_width > 0 && kb == (commn_blocks - 1)) {
-					comm_block_width = comm_last_block_width;
-				}
-
-				for (i = ib * block_size; i < (ib * block_size) + a_block_height; i++) {
-					i_a_row_offset = (i+thread_id)*ab_comn;
-					i_c_row_offset = (i+thread_id)*b_cols;
-					for (j = jb * block_size; j < (jb * block_size) + b_block_width;
-					j++) {
-						for (k = kb * block_size;
-						k < (kb * block_size) + comm_block_width; k++) {
-							k_b_row_offset = (k+thread_id)*b_cols;
-							if (A[i_a_row_offset + k] != 0 && B[k_b_row_offset + j] != 0) {
-								C[i_c_row_offset + j] += A[i_a_row_offset + k] * B[k_b_row_offset + j];
-							}
-						}
-					}
-				}
-			}
-		}
-	}
+	return 0;
 }

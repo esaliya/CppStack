@@ -158,10 +158,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="mm.cpp" />
-    <ClCompile Include="mm_worker.cpp" />
+    <ClCompile Include="mm_total.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="mm_worker.h" />
+    <ClInclude Include="mm.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

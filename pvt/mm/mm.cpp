@@ -111,6 +111,66 @@ void mm_lrt_local(int rank, int thread_count, int iterations, int a_rows, int b_
 	}
 }
 
+void mm_fj_global(int rank, int thread_count, int iterations, int a_rows, int b_cols, int ab_comn, int block_size)
+{
+	omp_set_num_threads(thread_count);
+	vector<double> times(thread_count);
+	for (int i = 0; i < thread_count; ++i)
+	{
+		times[i] = 0.0;
+	}
+
+	double* A = static_cast<double*>(malloc(sizeof(double)*a_rows*ab_comn*thread_count));
+	double* B = static_cast<double*>(malloc(sizeof(double)*b_cols*ab_comn*thread_count));
+	double* C = static_cast<double*>(malloc(sizeof(double)*a_rows*b_cols*thread_count));
+
+
+	for (int i = 0; i < a_rows*ab_comn*thread_count; ++i)
+	{
+		A[i] = ((i & 1) == 0) ? (0.9999995 / 1.0000023) : (1.0000023 / 0.9999995);
+	}
+	for (int i = 0; i < b_cols*ab_comn*thread_count; ++i)
+	{
+		B[i] = ((i & 1) == 0) ? (1.0000023 / 0.9999995) : (0.9999995 / 1.0000023);
+	}
+	for (int i = 0; i < a_rows*b_cols*thread_count; ++i)
+	{
+		C[i] = 0.0;
+	}
+
+	for (int itr = 0; itr < iterations; ++itr)
+	{
+#pragma omp parallel
+		{
+			int num_threads = omp_get_num_threads();
+			int thread_id = omp_get_thread_num();
+			if (thread_count != num_threads)
+			{
+				cout << "Thread count " << thread_count << " mismatch with omp thread count " << num_threads << "\n";
+			}
+
+			
+#pragma omp barrier
+			time_point<system_clock> start, end;
+			start = system_clock::now();
+			block_matrix_multiply_with_thread_offset(A, B, a_rows, b_cols, ab_comn, block_size, C, thread_id);
+			end = system_clock::now();
+			duration<double> elapsed_seconds = end - start;
+#pragma omp barrier
+			times[thread_id] += elapsed_seconds.count();
+		}
+	}
+
+	free(A);
+	free(B);
+	free(C);
+
+	for (int i = 0; i < thread_count; ++i)
+	{
+		cout << "rank " << rank << "thread " << i << " elapsed " << times[i] << "s\n";
+	}
+}
+
 void mm_fj_local(int rank, int thread_count, int iterations, int a_rows, int b_cols, int ab_comn, int block_size)
 {
 	omp_set_num_threads(thread_count);
@@ -211,6 +271,9 @@ int main(int argc, char *argv[])
 	else if (lrt == 1 && local == 0)
 	{
 		mm_lrt_global(rank, thread_count, iterations, a_rows, b_cols, ab_comn, block_size);
+	} else if (lrt == 0 && local == 0)
+	{
+		mm_fj_global(rank, thread_count, iterations, a_rows, b_cols, ab_comn, block_size);
 	}
 	MPI_Finalize();
     return 0;

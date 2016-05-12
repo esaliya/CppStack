@@ -54,7 +54,7 @@ void mm_lrt_global(int rank, int thread_count, int iterations, int a_rows, int b
 		duration<double> elapsed_seconds = end - start;
 		time_t end_time = system_clock::to_time_t(end);
 
-		cout << "rank " << rank << "thread " << thread_id << " elapsed " << elapsed_seconds.count() << "s\n";
+		cout << "rank " << rank << " thread " << thread_id << " elapsed " << elapsed_seconds.count() << "s\n";
 	}
 
 	free(A);
@@ -102,7 +102,7 @@ void mm_lrt_local(int rank, int thread_count, int iterations, int a_rows, int b_
 		duration<double> elapsed_seconds = end - start;
 		time_t end_time = system_clock::to_time_t(end);
 
-		cout << "rank " << rank << "thread " << thread_id << " elapsed " << elapsed_seconds.count() << "s\n";
+		cout << "rank " << rank << " thread " << thread_id << " elapsed " << elapsed_seconds.count() << "s\n";
 
 		free(A);
 		free(B);
@@ -167,7 +167,7 @@ void mm_fj_global(int rank, int thread_count, int iterations, int a_rows, int b_
 
 	for (int i = 0; i < thread_count; ++i)
 	{
-		cout << "rank " << rank << "thread " << i << " elapsed " << times[i] << "s\n";
+		cout << "rank " << rank << " thread " << i << " elapsed " << times[i] << "s\n";
 	}
 }
 
@@ -225,7 +225,7 @@ void mm_fj_local(int rank, int thread_count, int iterations, int a_rows, int b_c
 	}
 	for (int i = 0; i < thread_count; ++i)
 	{
-		cout << "rank " << rank << "thread " << i << " elapsed " << times[i] << "s\n";
+		cout << "rank " << rank << " thread " << i << " elapsed " << times[i] << "s\n";
 	}
 }
 

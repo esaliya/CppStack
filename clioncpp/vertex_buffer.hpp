@@ -10,7 +10,7 @@
 class vertex_buffer{
 public:
   vertex_buffer(){};
-  vertex_buffer(int offset_factor, short* buffer){
+  vertex_buffer(int offset_factor, std::shared_ptr<short> buffer){
     this->offset_factor = offset_factor;
     this->buffer = buffer;
   }
@@ -24,7 +24,7 @@ public:
     this->offset_factor = offset_factor;
   }
 
-  void set_buffer(short* buffer) {
+  void set_buffer(std::shared_ptr<short> buffer) {
     this->buffer = buffer;
   }
 
@@ -32,6 +32,6 @@ private:
   int offset_factor;
 
 protected:
-  short* buffer;
+  std::shared_ptr<short> buffer;
 };
 

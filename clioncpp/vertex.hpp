@@ -21,30 +21,28 @@ public:
     this->label = label;
     this->weight = weight;
     outnbr_lbl_to_world_rank = new std::map<int,int>();
-    outrank_to_send_buffer = new std::map<int,short*>();
-    recv_buffers = new std::vector<recv_vertex_buffer>();
+    outrank_to_send_buffer = new std::map<int,std::shared_ptr<vertex_buffer>>();
+    recv_buffers = new std::vector<std::shared_ptr<recv_vertex_buffer>>();
     msg = new message();
-    recvd_msgs = new std::vector<message>();
+    recvd_msgs = new std::vector<std::shared_ptr<message>>();
 
     for (int i = 0; i < outnbrs_length; ++i) {
       (*outnbr_lbl_to_world_rank)[outnbrs[i]] = -1;
     }
   }
 
-  vertex(std::string vertex_line){
-    std::vector<std::string> tokens;
-    boost::split(tokens, vertex_line, boost::is_any_of(" "), boost::token_compress_on);
-    this->label = std::stoi(tokens[0]);
-    this->weight = std::stod(tokens[1]);
-    outnbr_lbl_to_world_rank = new std::map<int,int>();
-    outrank_to_send_buffer = new std::map<int,short*>();
-    recv_buffers = new std::vector<recv_vertex_buffer>();
-    msg = new message();
-    recvd_msgs = new std::vector<message>();
-
-    for (int i = 2; i < tokens.size(); ++i){
-      (*outnbr_lbl_to_world_rank)[std::stoi(tokens[i])] = -1;
-    }
+  vertex(std::vector<std::string> &tokens){
+//    this->label = std::stoi(tokens[0]);
+//    this->weight = std::stof(tokens[1]);
+//    outnbr_lbl_to_world_rank = new std::map<int,int>();
+//    outrank_to_send_buffer = new std::map<int,std::shared_ptr<vertex_buffer>>();
+//    recv_buffers = new std::vector<std::shared_ptr<recv_vertex_buffer>>();
+//    msg = new message();
+//    recvd_msgs = new std::vector<std::shared_ptr<message>>();
+//
+//    for (int i = 2; i < tokens.size(); ++i){
+//      (*outnbr_lbl_to_world_rank)[std::stoi(tokens[i])] = -1;
+//    }
   }
 
   ~vertex(){
@@ -53,20 +51,43 @@ public:
     delete recv_buffers;
     delete msg;
     delete recvd_msgs;
-    delete gf;
     delete opt_tbl;
   }
 
+  // locally allocated, so no need of shared_ptr
   std::map<int,int>* outnbr_lbl_to_world_rank;
-  std::map<int,short*>* outrank_to_send_buffer;
-  std::vector<recv_vertex_buffer>* recv_buffers;
+  std::map<int,std::shared_ptr<vertex_buffer>>* outrank_to_send_buffer;
+  std::vector<std::shared_ptr<recv_vertex_buffer>>* recv_buffers;
 
   message* msg;
-  std::vector<message>* recvd_msgs;
+  std::vector<std::shared_ptr<message>>* recvd_msgs;
 
   int label;
   double weight;
   unsigned int uniq_rand_seed;
+
+  void compute(int super_step, int iter, int* completion_vars, std::map<int, int> random_assignments){
+    // TODO - complete compute()
+  }
+
+  int prepare_send(int super_step, int shift){
+    // TODO - complete prepare_send()
+    return -27;
+  }
+
+  void process_recvd(int super_step, int shift){
+    // TODO - complete process_recvd()
+  }
+
+  void init(int k , int r, std::shared_ptr<galois_field> gf){
+    this->k = k;
+    this->gf = gf;
+    opt_tbl = new short[k+1];
+  }
+
+  void reset(){
+    // TODO - complete reset()
+  }
 
   void finalize_iteration(){
     total_sum = (short) (*gf).add(total_sum, opt_tbl[k]);
@@ -78,7 +99,7 @@ public:
 
 private:
   int k;
-  galois_field* gf;
+  std::shared_ptr<galois_field> gf;
   short* opt_tbl;
   short total_sum;
   std::uniform_real_distribution<double> unif;

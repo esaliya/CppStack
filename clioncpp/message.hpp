@@ -14,20 +14,21 @@ public:
   message(){}
   ~message(){}
 
-  void copy(short* buffer, int offset){
-    buffer[offset] = dim_a;
-    std::copy(data, data+dim_a, &buffer[offset+1]);
+  void copy(std::shared_ptr<short> buffer, int offset){
+    short* b = buffer.get();
+    b[offset] = dim_a;
+    std::copy(data, data+dim_a, &b[offset+1]);
   }
 
-  void load(short* buffer, int offset, int recvd_msg_size){
+  void load(std::shared_ptr<short> buffer, int offset, int recvd_msg_size){
     msg_size = recvd_msg_size;
-    dim_a = buffer[offset];
+    dim_a = buffer.get()[offset];
     read_offset = offset+1;
     this->buffer = buffer;
   }
 
   short get(int i){
-    return buffer[read_offset+i];
+    return buffer.get()[read_offset+i];
   }
 
   int get_msg_size(){
@@ -46,6 +47,6 @@ private:
   short* data;
   short dim_a;
   int read_offset;
-  short* buffer;
+  std::shared_ptr<short> buffer;
 
 };

@@ -32,17 +32,17 @@ public:
   }
 
   vertex(std::vector<std::string> &tokens){
-//    this->label = std::stoi(tokens[0]);
-//    this->weight = std::stof(tokens[1]);
-//    outnbr_lbl_to_world_rank = new std::map<int,int>();
-//    outrank_to_send_buffer = new std::map<int,std::shared_ptr<vertex_buffer>>();
-//    recv_buffers = new std::vector<std::shared_ptr<recv_vertex_buffer>>();
-//    msg = new message();
-//    recvd_msgs = new std::vector<std::shared_ptr<message>>();
-//
-//    for (int i = 2; i < tokens.size(); ++i){
-//      (*outnbr_lbl_to_world_rank)[std::stoi(tokens[i])] = -1;
-//    }
+    this->label = std::stoi(tokens[0]);
+    this->weight = std::stof(tokens[1]);
+    outnbr_lbl_to_world_rank = new std::map<int,int>();
+    outrank_to_send_buffer = new std::map<int,std::shared_ptr<vertex_buffer>>();
+    recv_buffers = new std::vector<std::shared_ptr<recv_vertex_buffer>>();
+    msg = new message();
+    recvd_msgs = new std::vector<std::shared_ptr<message>>();
+
+    for (int i = 2; i < tokens.size(); ++i){
+      (*outnbr_lbl_to_world_rank)[std::stoi(tokens[i])] = -1;
+    }
   }
 
   ~vertex(){

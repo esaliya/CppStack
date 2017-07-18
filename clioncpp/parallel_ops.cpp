@@ -46,12 +46,12 @@ void parallel_ops::set_parallel_decomposition(const char *file, int global_vertx
 }
 
 void parallel_ops::simple_graph_partition(const char *file, int global_vertex_count, std::vector<std::shared_ptr<vertex>> *vertices) {
+  std::chrono::time_point<std::chrono::system_clock> start, end;
+
   int q = global_vertex_count/world_procs_count;
   int r = global_vertex_count % world_procs_count;
   int my_vertex_count = (world_proc_rank < r) ? q+1: q;
   int skip_vertex_count = q*world_proc_rank + (world_proc_rank < r ? world_proc_rank : r);
-
-  vertices = new std::vector<std::shared_ptr<vertex>>((unsigned long) my_vertex_count);
 
 #ifndef NDEBUG
   std::cout<<"Rank: " << world_proc_rank << " q: " << q << " r: " << r << " my_vertex_count: " << my_vertex_count << std::endl;
@@ -59,13 +59,13 @@ void parallel_ops::simple_graph_partition(const char *file, int global_vertex_co
 
   std::ifstream fs;
   std::string line;
+  std::vector<std::string> tokens;
+  vertices = new std::vector<std::shared_ptr<vertex>>((unsigned long) my_vertex_count);
+
   fs.open(file);
 
-  std::vector<std::string> tokens;
-  int local_idx;
-
-  std::chrono::time_point<std::chrono::system_clock> start, end;
   start = std::chrono::system_clock::now();
+  int local_idx;
   for (int i = 0; i < global_vertex_count; ++i) {
     getline(fs, line);
     if (i < skip_vertex_count) {
@@ -119,5 +119,9 @@ void parallel_ops::simple_graph_partition(const char *file, int global_vertex_co
 }
 
 void parallel_ops::decompose_among_threads(std::vector<std::shared_ptr<vertex>> &vertices) {
+
+}
+
+void parallel_ops::find_nbrs(int global_vertex_count, std::vector<std::shared_ptr<vertex>> *vertices) {
 
 }

@@ -13,6 +13,26 @@
 #include <set>
 #include "test_map_class.hpp"
 
+void vector_test(){
+  std::shared_ptr<std::vector<int>> v = std::make_shared<std::vector<int>>();
+  v->push_back(10);
+  if (v->size() > 0){
+    ++(*v)[0];
+  }
+  std::cout<<(*v)[0]<<std::endl;
+
+  std::shared_ptr<std::vector<int>> w = std::make_shared<std::vector<int>>();
+  w->push_back(23);
+  w->push_back(45);
+
+  std::copy(w->begin(), w->end(), std::back_inserter(*v));
+
+  for (const auto &val : (*v)){
+    std::cout<<val<<std::endl;
+  }
+
+}
+
 void sizeof_test(){
   int x = 1000000000;
   std::cout<< sizeof(x)<<" "<<x<<std::endl;
@@ -233,7 +253,8 @@ void test(){
 }
 
 int main() {
-  sizeof_test();
+  vector_test();
+//  sizeof_test();
 //  assign_to_pointer_test2();
 //  assign_to_pointer_test();
 //  pass_by_ref_test();

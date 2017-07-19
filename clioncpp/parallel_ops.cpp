@@ -215,7 +215,7 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
     }
   }
 
-#ifndef NDEBUG
+#ifdef LONG_DEBUG
   debug_str = (world_proc_rank==0) ? "DEBUG: find_nbrs: 5: out_nbrs [ \n" : " ";
   debug_str.append("  r").append(std::to_string(world_proc_rank)).append("[\n");
   for (const std::shared_ptr<vertex> &v : (*vertices)){
@@ -232,7 +232,67 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
   }
 #endif
 
+  /* The following sections are very subtle, so keep your eyes open */
 
+  // BEGIN ----------------
+  std::map<int, std::shared_ptr<std::vector<int>>> *sendto_rank_to_msgcount_and_destined_labels
+      = new std::map<int, std::shared_ptr<std::vector<int>>>();
+  int msg_size = 0;
+  // The vertex order in the loop is important as it's implicitly assumed to reduce communication cost
+  for (const std::shared_ptr<vertex> &v : (*vertices)){
+    // TODO - possibly this map can be reused by doing erase() on each loop instance
+    // inverse_map is essentially a mapping from ranks this particular vertex
+    // needs to communicate to the neighbor vertices that reside on those ranks
+    std::map<int, std::shared_ptr<std::vector<int>>> *inverse_map
+        = new std::map<int, std::shared_ptr<std::vector<int>>>();
+    // Populate inverse_map
+    for (const auto &kv : (*v->outnbr_lbl_to_world_rank)){
+      int destined_label = kv.first;
+      int destined_rank = kv.second;
+      std::map<int, std::shared_ptr<std::vector<int>>>::iterator it = inverse_map->find(destined_rank);
+      if (it == inverse_map->end()){
+        (*inverse_map)[destined_rank] = std::make_shared<std::vector<int>>();
+      }
+      it = inverse_map->find(destined_rank);
+      // Now, "it" iterator should not be empty
+      assert(it != inverse_map->end());
+      it->second->push_back(destined_label);
+    }
+
+    for (const auto &kv : (*inverse_map)){
+      int destined_rank = kv.first;
+      std::shared_ptr<std::vector<int>> destined_labels = kv.second;
+      std::map<int, std::shared_ptr<std::vector<int>>>::iterator it
+          = sendto_rank_to_msgcount_and_destined_labels->find(destined_rank);
+      if (it == sendto_rank_to_msgcount_and_destined_labels->end()){
+        (*sendto_rank_to_msgcount_and_destined_labels)[destined_rank] = std::make_shared<std::vector<int>>();
+        msg_size += 2;
+      }
+      it = sendto_rank_to_msgcount_and_destined_labels->find(destined_rank);
+      // Now, "it" iterator should not be empty
+      assert(it != sendto_rank_to_msgcount_and_destined_labels->end());
+      std::shared_ptr<std::vector<int>> count_and_destined_vertex_labels = it->second;
+      if (count_and_destined_vertex_labels->size() > 0){
+        ++(*count_and_destined_vertex_labels)[0];
+      } else {
+        count_and_destined_vertex_labels->push_back(1);
+      }
+
+      if (destined_labels->size() > 1){
+        count_and_destined_vertex_labels->push_back((int &&) (-1 * destined_labels->size()));
+        std::copy(destined_labels->begin(), destined_labels->end(),
+                  std::back_inserter(*count_and_destined_vertex_labels));
+        msg_size += destined_labels->size()+1;
+      } else {
+        count_and_destined_vertex_labels->push_back((*destined_labels)[0]);
+      }
+    }
+
+    delete inverse_map;
+  }
+  // END ----------------
+
+  delete sendto_rank_to_msgcount_and_destined_labels;
   delete label_to_world_rank;
   delete [] global_vertex_labels;
   delete [] local_vertex_displas;

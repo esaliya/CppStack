@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
   std::vector<std::shared_ptr<vertex>> *vertices = nullptr;
   p_ops->set_parallel_decomposition(input_file.c_str(), vertex_count, vertices);
 
-  std::cout<<"---"<<(*vertices).capacity()<<std::endl;
+//  std::cout<<"---"<<(*vertices).capacity()<<std::endl;
 //  std::cout << "Rank: " << p_ops->get_world_proc_rank() << " of " << p_ops->get_world_procs_count() << " Hello, World! " << std::endl;
 
 //    Test::greet();

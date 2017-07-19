@@ -134,9 +134,8 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
 
 #ifndef NDEBUG
   /* Check vertex label to vertex map */
-  std::shared_ptr<vertex> v = (*label_to_vertex)[tmp_lbl];
   std::string debug_str = (world_proc_rank==0) ? "DEBUG: find_nbrs: 1: lastvertex [ " : " ";
-  debug_str.append(std::to_string(v->label)).append(" ");
+  debug_str.append(std::to_string((*label_to_vertex)[tmp_lbl]->label)).append(" ");
   debug_str = mpi_gather_string(debug_str);
   if (world_proc_rank == 0){
     std::cout<<std::endl<<std::string(debug_str).append("]")<<std::endl;
@@ -208,6 +207,30 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
   }
 
   /* Set where out-neighbors of vertices live */
+  for (const std::shared_ptr<vertex> &v : (*vertices)){
+    std::map<int, int> *outnbr_label_to_world_rank = v->outnbr_lbl_to_world_rank;
+    for (const auto &kv : (*outnbr_label_to_world_rank)){
+      int rank = (*label_to_world_rank)[kv.first];
+      (*outnbr_label_to_world_rank)[kv.first] = rank;
+    }
+  }
+
+#ifndef NDEBUG
+  debug_str = (world_proc_rank==0) ? "DEBUG: find_nbrs: 5: out_nbrs [ \n" : " ";
+  debug_str.append("  r").append(std::to_string(world_proc_rank)).append("[\n");
+  for (const std::shared_ptr<vertex> &v : (*vertices)){
+    std::map<int, int> *outnbr_label_to_world_rank = v->outnbr_lbl_to_world_rank;
+    debug_str.append("    v").append(std::to_string(v->label)).append("[\n");
+    for (const auto &kv : (*outnbr_label_to_world_rank)){
+      debug_str.append("      nbr").append(std::to_string(kv.first)).append("->r").append(std::to_string(kv.second)).append("\n");
+    }
+    debug_str.append("    ]\n");
+  }
+  debug_str = mpi_gather_string(debug_str);
+  if (world_proc_rank == 0){
+    std::cout<<std::endl<<std::string(debug_str).append("]")<<std::endl;
+  }
+#endif
 
 
   delete label_to_world_rank;

@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
   for (std::vector<std::shared_ptr<vertex>>::iterator it = vertices->begin(); it != vertices->end(); ++it){
     std::cout<<(*it).get()->label<<std::endl;
   }
-//  delete vertices;
+  delete vertices;
   p_ops->teardown_parallelism();
   return 0;
 }

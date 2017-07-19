@@ -13,6 +13,12 @@
 #include <set>
 #include "test_map_class.hpp"
 
+void sizeof_test(){
+  int x = 1000000000;
+  std::cout<< sizeof(x)<<" "<<x<<std::endl;
+}
+
+
 void assign_to_point_test2_internal_internal(std::vector<std::shared_ptr<test_map_class>> *&vec){
   vec = new std::vector<std::shared_ptr<test_map_class>>(5);
   (*vec)[0] = std::make_shared<test_map_class>(999);
@@ -227,7 +233,8 @@ void test(){
 }
 
 int main() {
-  assign_to_pointer_test2();
+  sizeof_test();
+//  assign_to_pointer_test2();
 //  assign_to_pointer_test();
 //  pass_by_ref_test();
 //  test_set_clear();

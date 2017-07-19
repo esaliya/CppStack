@@ -116,11 +116,54 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
   }
 
 #ifndef NDEBUG
+  /* Check vertex label to vertex map */
   std::shared_ptr<vertex> v = (*label_to_vertex)[tmp_lbl];
-  std::cout<<"find_nbrs: debug1: Rank: "<<world_proc_rank<<" "<<v->label<<std::endl;
+  std::cout<<"find_nbrs: debug1: Rank "<<world_proc_rank<<": lastvertex "<<v->label<<std::endl;
 #endif
 
+  int *local_vertex_counts = new int[world_procs_count];
+  MPI_Allgather(&local_vertex_count, 1, MPI_INT, local_vertex_counts, 1, MPI_INT, MPI_COMM_WORLD);
 
+#ifndef NDEBUG
+  /* Check local vertex counts */
+  if (world_proc_rank == 0) {
+    std::cout << "find_nbrs: debug2: Rank " << world_proc_rank << ": vcount[ ";
+    for (int i = 0; i < world_procs_count; ++i) {
+      std::cout << local_vertex_counts[i] << " ";
+    }
+    std::cout<<"]"<<std::endl;
+  }
+#endif
 
+  int *local_vertex_displas = new int[world_procs_count];
+  local_vertex_displas[0] = 0;
+  for (int i = 1; i < world_procs_count; ++i){
+    local_vertex_displas[i] = local_vertex_displas[i-1]+local_vertex_counts[i];
+  }
+
+#ifndef NDEBUG
+  if (world_proc_rank == 0) {
+    std::cout << "find_nbrs: debug3: Rank " << world_proc_rank << ": vdisplas[ ";
+    for (int i = 0; i < world_procs_count; ++i) {
+      std::cout << local_vertex_displas[i] << " ";
+    }
+    std::cout<<"]"<<std::endl;
+  }
+#endif
+
+#ifndef NDEBUG
+  /* Allreduce string test */
+  std::string s = "hello";
+  s.append(std::to_string(world_proc_rank)).append(" ");
+  string_allreduce(s);
+#endif
+
+  delete local_vertex_counts;
   delete label_to_vertex;
+}
+
+void parallel_ops::string_allreduce(std::string &str) {
+  int len = (int) str.length();
+  int *lengths = new int[world_procs_count];
+  MPI_Allgather(&len, 1, MPI_INT, lengths, 1, MPI_INT, MPI_COMM_WORLD);
 }

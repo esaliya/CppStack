@@ -88,34 +88,13 @@ void parallel_ops::simple_graph_partition(const char *file, int global_vertex_co
 
   fs.close();
 
-  /*long t = System.currentTimeMillis();
-  try (BufferedReader reader = Files.newBufferedReader(Paths.get(file))){
-    String line;
-    while ((line = reader.readLine()) != null){
-      if (Strings.isNullOrEmpty(line)) continue;
-      if (readCount < skip_vertex_count){
-        ++readCount;
-        continue;
-      }
-      vertices[i] = new Vertex(readCount, line);
-      ++i;
-      ++readCount;
-      if (i == my_vertex_count) break;
-    }
-
-  } catch (IOException e) {
-    e.printStackTrace();
-  }
-  if (debug3){
-    System.out.println("Rank: " + world_proc_rank + " readgraph: "+ (System.currentTimeMillis() - t) + " ms");
-  }
-
-  t = System.currentTimeMillis();
-  findNeighbors(global_vertex_count, vertices);
-  if (debug3 && world_proc_rank == 0){
-    System.out.println("Rank: 0 findNbrs: "+ (System.currentTimeMillis() - t) + " ms");
-  }
-  return vertices;*/
+  start = std::chrono::system_clock::now();
+  find_nbrs(global_vertex_count, vertices);
+  end = std::chrono::system_clock::now();
+  elapsed_seconds = end-start;
+#ifndef NDEBUG
+  std::cout<<"Rank: "<<world_proc_rank<<" find neighbors "<<elapsed_seconds.count()<<" s"<<std::endl;
+#endif
 }
 
 void parallel_ops::decompose_among_threads(std::vector<std::shared_ptr<vertex>> *&vertices) {

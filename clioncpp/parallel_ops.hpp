@@ -34,7 +34,7 @@ private:
 
   void simple_graph_partition(const char* file, int global_vertex_count, std::vector<std::shared_ptr<vertex>> *&vertices);
   void decompose_among_threads(std::vector<std::shared_ptr<vertex>> *&vertices);
-  void find_nbrs(int global_vertex_count, std::vector<std::shared_ptr<vertex>> *&vertices);
+  void find_nbrs(int global_vertex_count, int local_vertex_count, std::vector<std::shared_ptr<vertex>> *&vertices);
 };
 
 #endif //CLIONCPP_PARALLEL_OPS_H

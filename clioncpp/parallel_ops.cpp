@@ -38,14 +38,14 @@ int parallel_ops::get_world_procs_count() const {
     return world_procs_count;
 }
 
-void parallel_ops::set_parallel_decomposition(const char *file, int global_vertx_count, std::vector<std::shared_ptr<vertex>> **vertices) {
+void parallel_ops::set_parallel_decomposition(const char *file, int global_vertx_count, std::vector<std::shared_ptr<vertex>> *&vertices) {
   // TODO - add logic to switch between different partition methods as well as txt vs binary files
   // for now let's assume simple partitioning with text files
   simple_graph_partition(file, global_vertx_count, vertices);
-//  decompose_among_threads(vertices);
+  decompose_among_threads(vertices);
 }
 
-void parallel_ops::simple_graph_partition(const char *file, int global_vertex_count, std::vector<std::shared_ptr<vertex>> **vertices) {
+void parallel_ops::simple_graph_partition(const char *file, int global_vertex_count, std::vector<std::shared_ptr<vertex>> *&vertices) {
   std::chrono::time_point<std::chrono::system_clock> start, end;
 
   int q = global_vertex_count/world_procs_count;
@@ -60,7 +60,7 @@ void parallel_ops::simple_graph_partition(const char *file, int global_vertex_co
   std::ifstream fs;
   std::string line;
   std::vector<std::string> tokens;
-  *vertices = new std::vector<std::shared_ptr<vertex>>((unsigned long) my_vertex_count);
+  vertices = new std::vector<std::shared_ptr<vertex>>((unsigned long) my_vertex_count);
 
   fs.open(file);
 
@@ -73,7 +73,7 @@ void parallel_ops::simple_graph_partition(const char *file, int global_vertex_co
     }
     local_idx = i-skip_vertex_count;
     boost::split(tokens, line, boost::is_any_of(" "), boost::token_compress_on);
-    (**vertices)[local_idx] = std::make_shared<vertex>(tokens);
+    (*vertices)[local_idx] = std::make_shared<vertex>(tokens);
 
     if (local_idx+1 == my_vertex_count){
       break;
@@ -118,10 +118,10 @@ void parallel_ops::simple_graph_partition(const char *file, int global_vertex_co
   return vertices;*/
 }
 
-void parallel_ops::decompose_among_threads(std::vector<std::shared_ptr<vertex>> &vertices) {
+void parallel_ops::decompose_among_threads(std::vector<std::shared_ptr<vertex>> *&vertices) {
 
 }
 
-void parallel_ops::find_nbrs(int global_vertex_count, std::vector<std::shared_ptr<vertex>> *vertices) {
+void parallel_ops::find_nbrs(int global_vertex_count, std::vector<std::shared_ptr<vertex>> *&vertices) {
 
 }

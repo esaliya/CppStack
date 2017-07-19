@@ -5,7 +5,6 @@
 #include <iostream>
 #include <map>
 #include <vector>
-#include <boost/shared_ptr.hpp>
 #include <random>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -13,6 +12,20 @@
 #include <boost/foreach.hpp>
 #include <set>
 #include "test_map_class.hpp"
+
+void assign_to_pointer_test_internal(std::vector<int> **v){
+  (*v) = new std::vector<int>();
+  (*v)->push_back(10);
+}
+
+void assign_to_pointer_test(){
+  std::vector<int> *WECK = nullptr;
+  std::vector<int> **vec = &WECK;
+  assign_to_pointer_test_internal(vec);
+  std::cout<<(**vec)[0]<<std::endl;
+  delete *vec;
+}
+
 
 void pass_by_ref_helper(std::vector<int> &vec){
   vec[0] = 23;
@@ -196,7 +209,8 @@ void test(){
 }
 
 int main() {
-  pass_by_ref_test();
+  assign_to_pointer_test();
+//  pass_by_ref_test();
 //  test_set_clear();
 //  test_object_creation_and_shared_ptr();
 //  test_shared_ptr_for_set();

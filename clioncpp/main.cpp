@@ -26,9 +26,9 @@ int max_msg_size;
 
 parallel_ops *p_ops;
 
-void test_pass(std::vector<std::shared_ptr<int>> *&vertices){
-  vertices = new std::vector<std::shared_ptr<int>>((unsigned long) 1);
-  (*vertices)[0] = std::make_shared<int>(888);
+void test_pass(std::vector<std::shared_ptr<vertex>> *&vertices){
+  vertices = new std::vector<std::shared_ptr<vertex>>((unsigned long) 1);
+  (*vertices)[0] = std::make_shared<vertex>(888);
 }
 
 int main(int argc, char **argv) {
@@ -40,7 +40,7 @@ int main(int argc, char **argv) {
 //  p_ops->set_parallel_decomposition(input_file.c_str(), vertex_count, vertices);
 
 
-  std::vector<std::shared_ptr<int>> *vertices = nullptr;
+  std::vector<std::shared_ptr<vertex>> *vertices = nullptr;
   test_pass(vertices);
 
   std::cout<<"---"<<(*vertices).capacity()<<std::endl;
@@ -50,8 +50,9 @@ int main(int argc, char **argv) {
 
 
 
-  for (std::vector<std::shared_ptr<int>>::iterator it = vertices->begin(); it != vertices->end(); ++it){
-    std::cout<<*((*it).get())<<std::endl;
+  for (std::vector<std::shared_ptr<vertex>>::iterator it = vertices->begin(); it != vertices->end(); ++it){
+//    std::cout<<*((*it).get())<<std::endl;
+    std::cout<<((*it).get())->label<<std::endl;
   }
   delete vertices;
   p_ops->teardown_parallelism();

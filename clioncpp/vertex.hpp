@@ -17,6 +17,8 @@
 
 class vertex {
 public:
+  vertex(int label):label(label){}
+
   vertex(int label, double weight, int* outnbrs, int outnbrs_length){
     this->label = label;
     this->weight = weight;

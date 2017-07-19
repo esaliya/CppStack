@@ -8,6 +8,8 @@
 const std::shared_ptr<test_map_class> test_map_class::X(create_object());
 const std::shared_ptr<test_map_class> test_map_class::Y(create_object2());
 
+test_map_class::test_map_class():yy(12344) {}
+
 test_map_class::test_map_class(const int yy) : yy(yy) {}
 
 std::map<int,int> test_map_class::static_map = std::map<int,int>();
@@ -64,6 +66,10 @@ test_map_class::test_map_class(std::shared_ptr<std::set<long, rev_comp_t>> dgrs)
   for (std::set<long, rev_comp_t>::iterator it = my_degrees.begin(); it != my_degrees.end(); ++it){
     std::cout<<(*it)<<std::endl;
   }
+}
+
+int test_map_class::get_yy() {
+  return yy;
 }
 
 //std::shared_ptr<std::set<long, rev_comp_t)>> test_map_class::create_degrees_collection() {

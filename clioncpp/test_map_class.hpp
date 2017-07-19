@@ -15,11 +15,13 @@ typedef bool (*rev_comp_t)(const long&, const long&);
 class test_map_class {
 
 public:
+  test_map_class();
   test_map_class(const int yy);
 
   static void add_and_print_element(int x, int y);
   void add_element_to_vector_and_print(int z);
   void test_object_creation_and_shared_ptr();
+  int get_yy();
   static std::shared_ptr<std::set<long, rev_comp_t>> create_degrees_collection();
   static std::shared_ptr<test_map_class> create_object_and_return_shared_ptr();
   ~test_map_class(){}

@@ -13,6 +13,24 @@
 #include <set>
 #include "test_map_class.hpp"
 
+void assign_to_point_test2_internal_internal(std::vector<std::shared_ptr<test_map_class>> *&vec){
+  vec = new std::vector<std::shared_ptr<test_map_class>>(5);
+  (*vec)[0] = std::make_shared<test_map_class>(999);
+}
+
+void assign_to_pointer_test2_internal(std::vector<std::shared_ptr<test_map_class>> *&vec){
+  assign_to_point_test2_internal_internal(vec);
+  (*vec)[1] = std::make_shared<test_map_class>(888);
+}
+
+void assign_to_pointer_test2(){
+  std::vector<std::shared_ptr<test_map_class>> *vec = nullptr;
+  assign_to_pointer_test2_internal(vec);
+  std::cout<<((*vec)[0].get())->get_yy()<<std::endl;
+  std::cout<<((*vec)[1].get())->get_yy()<<std::endl;
+  delete vec;
+}
+
 void assign_to_pointer_test_internal(std::vector<int> **v){
   (*v) = new std::vector<int>();
   (*v)->push_back(10);
@@ -209,7 +227,8 @@ void test(){
 }
 
 int main() {
-  assign_to_pointer_test();
+  assign_to_pointer_test2();
+//  assign_to_pointer_test();
 //  pass_by_ref_test();
 //  test_set_clear();
 //  test_object_creation_and_shared_ptr();

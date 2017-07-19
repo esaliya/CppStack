@@ -53,7 +53,7 @@ public:
     delete recv_buffers;
     delete msg;
     delete recvd_msgs;
-    delete opt_tbl;
+//    delete opt_tbl;
   }
 
   // locally allocated, so no need of shared_ptr

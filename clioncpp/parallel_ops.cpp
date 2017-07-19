@@ -41,11 +41,8 @@ int parallel_ops::get_world_procs_count() const {
 void parallel_ops::set_parallel_decomposition(const char *file, int global_vertx_count, std::vector<std::shared_ptr<vertex>> *&vertices) {
   // TODO - add logic to switch between different partition methods as well as txt vs binary files
   // for now let's assume simple partitioning with text files
-//  simple_graph_partition(file, global_vertx_count, vertices);
-//  decompose_among_threads(vertices);
-
-  vertices = new std::vector<std::shared_ptr<vertex>>((unsigned long) 1);
-  (*vertices)[0] = std::make_shared<vertex>(777);
+  simple_graph_partition(file, global_vertx_count, vertices);
+  decompose_among_threads(vertices);
 }
 
 void parallel_ops::simple_graph_partition(const char *file, int global_vertex_count, std::vector<std::shared_ptr<vertex>> *&vertices) {

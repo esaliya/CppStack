@@ -174,7 +174,47 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
   }
 #endif
 
+  int *global_vertex_labels = new int[global_vertex_count];
+  int offset = local_vertex_displas[world_proc_rank];
+  for (int i = 0; i < local_vertex_count; ++i){
+    global_vertex_labels[i+offset] = (*vertices)[i]->label;
+  }
+  MPI_Allgatherv(MPI_IN_PLACE, local_vertex_count, MPI_INT, global_vertex_labels,
+                 local_vertex_counts, local_vertex_displas, MPI_INT, MPI_COMM_WORLD);
 
+#ifdef LONG_DEBUG
+  /* Check global vertex labels */
+  debug_str = (world_proc_rank==0) ? "DEBUG: find_nbrs: 4: vlabels [ \n" : " ";
+  for (int i = 0; i < world_procs_count; ++i) {
+    debug_str.append("  r").append(std::to_string(i)).append("[ ");
+    for (int j = 0; j < local_vertex_counts[i]; ++j){
+      debug_str.append(std::to_string(global_vertex_labels[local_vertex_displas[i]+j])).append(" ");
+    }
+    debug_str.append("]\n");
+  }
+  if (world_proc_rank == 0){
+    std::cout<<std::endl<<std::string(debug_str).append("]")<<std::endl;
+  }
+#endif
+
+  /* Just keep in mind this map and the global_vertex_labels can be really large
+   * Think of optimizations if this becomes a bottleneck */
+  std::map<int,int> *label_to_world_rank = new std::map<int,int>();
+  for (int rank = 0; rank < world_procs_count; ++rank){
+    for (int i = 0; i < local_vertex_counts[rank]; ++i){
+      offset = local_vertex_displas[rank];
+      (*label_to_world_rank)[global_vertex_labels[i + offset]] = rank;
+    }
+  }
+
+  /* Set where out-neighbors of vertices live */
+
+
+  delete label_to_world_rank;
+  delete [] global_vertex_labels;
+  delete [] local_vertex_displas;
+  delete [] local_vertex_counts;
+  delete label_to_vertex;
 
 #ifdef ALL_DEBUG
   /* Allreduce string test */
@@ -188,9 +228,6 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
     std::cout<<std::endl<<std::string(debug_str)<<std::endl;
   }
 #endif
-
-  delete [] local_vertex_counts;
-  delete label_to_vertex;
 }
 
 std::string parallel_ops::mpi_gather_string(std::string &str) {

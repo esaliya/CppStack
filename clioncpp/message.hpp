@@ -44,7 +44,7 @@ public:
 
 private:
   int msg_size;
-  short* data;
+  short* data = nullptr;
   short dim_a;
   int read_offset;
   std::shared_ptr<short> buffer;

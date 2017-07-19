@@ -49,20 +49,26 @@ public:
 
   ~vertex(){
     delete outnbr_lbl_to_world_rank;
+    outnbr_lbl_to_world_rank = nullptr;
     delete outrank_to_send_buffer;
+    outrank_to_send_buffer = nullptr;
     delete recv_buffers;
+    recv_buffers = nullptr;
     delete msg;
+    msg = nullptr;
     delete recvd_msgs;
-//    delete opt_tbl;
+    recvd_msgs = nullptr;
+    delete opt_tbl;
+    opt_tbl = nullptr;
   }
 
   // locally allocated, so no need of shared_ptr
-  std::map<int,int>* outnbr_lbl_to_world_rank;
-  std::map<int,std::shared_ptr<vertex_buffer>>* outrank_to_send_buffer;
-  std::vector<std::shared_ptr<recv_vertex_buffer>>* recv_buffers;
+  std::map<int,int>* outnbr_lbl_to_world_rank = nullptr;
+  std::map<int,std::shared_ptr<vertex_buffer>>* outrank_to_send_buffer = nullptr;
+  std::vector<std::shared_ptr<recv_vertex_buffer>>* recv_buffers = nullptr;
 
-  message* msg;
-  std::vector<std::shared_ptr<message>>* recvd_msgs;
+  message* msg = nullptr;
+  std::vector<std::shared_ptr<message>>* recvd_msgs = nullptr;
 
   int label;
   double weight;
@@ -102,7 +108,7 @@ public:
 private:
   int k;
   std::shared_ptr<galois_field> gf;
-  short* opt_tbl;
+  short* opt_tbl = nullptr;
   short total_sum;
   std::uniform_real_distribution<double> unif;
   std::default_random_engine re;

@@ -26,7 +26,7 @@ private:
   static std::shared_ptr<polynomial> create_random(int degree);
   static std::set<long, rev_comp_t> *create_degrees_collection();
 
-  std::set<long, rev_comp_t> *degrees;
+  std::set<long, rev_comp_t> *degrees = nullptr;
 
   polynomial();
   polynomial(std::set<long, rev_comp_t> *degrees);

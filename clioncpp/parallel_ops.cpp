@@ -132,7 +132,7 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
     (*label_to_vertex)[(*it)->label] = *it;
   }
 
-#ifndef NDEBUG
+#ifdef LONG_DEBUG
   /* Check vertex label to vertex map */
   std::string debug_str = (world_proc_rank==0) ? "DEBUG: find_nbrs: 1: lastvertex [ " : " ";
   debug_str.append(std::to_string((*label_to_vertex)[tmp_lbl]->label)).append(" ");
@@ -145,7 +145,7 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
   int *local_vertex_counts = new int[world_procs_count];
   MPI_Allgather(&local_vertex_count, 1, MPI_INT, local_vertex_counts, 1, MPI_INT, MPI_COMM_WORLD);
 
-#ifndef NDEBUG
+#ifdef LONG_DEBUG
   /* Check local vertex counts */
   debug_str = (world_proc_rank==0) ? "DEBUG: find_nbrs: 2: vcount [ " : " ";
   for (int i = 0; i < world_procs_count; ++i) {
@@ -162,7 +162,7 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
     local_vertex_displas[i] = local_vertex_displas[i-1]+local_vertex_counts[i-1];
   }
 
-#ifndef NDEBUG
+#ifdef LONG_DEBUG
   /* Check local vertex displas */
   debug_str = (world_proc_rank==0) ? "DEBUG: find_nbrs: 3: vdisplas [ " : " ";
   for (int i = 0; i < world_procs_count; ++i) {

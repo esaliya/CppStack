@@ -292,7 +292,7 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
     delete inverse_map;
   }
 
-//#ifdef LONG_DEBUG
+#ifdef LONG_DEBUG
   /* print how many message counts and what are destined vertex labels (in order) for each rank from me */
   debug_str = (world_proc_rank==0) ? "DEBUG: find_nbrs: 6: msg_counts_and_labels [ \n" : " ";
   debug_str.append("  r").append(std::to_string(world_proc_rank))
@@ -309,7 +309,7 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
   if (world_proc_rank == 0){
     std::cout<<std::endl<<std::string(debug_str).append("]")<<std::endl;
   }
-//#endif
+#endif
   // END ----------------
 
   // BEGIN ################

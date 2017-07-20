@@ -285,13 +285,101 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
         msg_size += destined_labels->size()+1;
       } else {
         count_and_destined_vertex_labels->push_back((*destined_labels)[0]);
+        msg_size += 1;
       }
     }
 
     delete inverse_map;
   }
+
+//#ifdef LONG_DEBUG
+  std::cout<<world_proc_rank<<" "<<msg_size<<std::endl;
+  /* print how many message counts and what are destined vertex labels (in order) for each rank from me */
+  debug_str = (world_proc_rank==0) ? "DEBUG: find_nbrs: 6: msg_counts_and_labels [ \n" : " ";
+  debug_str.append("  r").append(std::to_string(world_proc_rank))
+      .append(" msg_size=").append(std::to_string(msg_size)).append("[\n");
+  for (const auto &pair : (*sendto_rank_to_msgcount_and_destined_labels)){
+    std::shared_ptr<std::vector<int>> list = pair.second;
+    debug_str.append("    sends ").append(std::to_string((*list)[0])).append(" msgs to rank ").append(std::to_string(pair.first)).append(" destined labels [ ");
+    for (auto it = ++(list->begin()); it != list->end(); ++it){
+      debug_str.append(std::to_string(*it)).append(" ");
+    }
+    debug_str.append("]\n");
+  }
+  debug_str = mpi_gather_string(debug_str);
+  if (world_proc_rank == 0){
+    std::cout<<std::endl<<std::string(debug_str).append("]")<<std::endl;
+  }
+//#endif
   // END ----------------
 
+  // BEGIN ################
+  int max_buffer_size = -1;
+  MPI_Allreduce(&msg_size, &max_buffer_size, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+  max_buffer_size += 1; // +1 to send msgSize
+  std::map<int, std::shared_ptr<std::vector<int>>> *recvfrom_rank_to_msgcount_and_destined_labels
+      = new std::map<int, std::shared_ptr<std::vector<int>>>();
+  int *buffer = new int[max_buffer_size];
+  for (int rank = 0; rank < world_procs_count; ++rank){
+    if (rank == world_proc_rank){
+      buffer[0] = msg_size;
+      int idx = 1;
+      for (const auto &kv : (*sendto_rank_to_msgcount_and_destined_labels)){
+        buffer[idx++] = -1 * (kv.first + global_vertex_count + 1);
+        for (const auto &val : (*kv.second)){
+          buffer[idx++] = val;
+        }
+      }
+    }
+    MPI_Bcast(buffer, max_buffer_size, MPI_INT, rank, MPI_COMM_WORLD);
+    int recv_msg_size = buffer[0];
+
+    for (int i = 1; i <= recv_msg_size; ++i) {
+      int val = buffer[i];
+      if (val < 0 && val < -1 * (global_vertex_count)) {
+        // It's the rank information
+        int destined_rank = (-1 * val) - (global_vertex_count + 1);
+        if (destined_rank == world_proc_rank) {
+          // It'll always be a unique rank, so no need to check if exists
+          std::shared_ptr<std::vector<int>> count_and_destined_vertex_labels
+              = std::make_shared<std::vector<int>>();
+          (*recvfrom_rank_to_msgcount_and_destined_labels)[rank] = count_and_destined_vertex_labels;
+          for (int j = i + 1; j <= recv_msg_size; ++j) {
+            val = buffer[j];
+            if (val >= 0 || (val < 0 && val >= -1 * global_vertex_count)) {
+              count_and_destined_vertex_labels->push_back(val);
+            } else {
+              break;
+            }
+          }
+          break;
+        }
+      }
+    }
+  }
+  delete [] buffer;
+
+#ifndef NDEBUG
+  /* print how many message counts and what are destined vertex labels (in order) for me from each rank */
+  debug_str = (world_proc_rank==0) ? "DEBUG: find_nbrs: 7: msg_counts_and_labels [ \n" : " ";
+  debug_str.append("  r").append(std::to_string(world_proc_rank)).append("[\n");
+  for (const auto &pair : (*recvfrom_rank_to_msgcount_and_destined_labels)){
+    std::shared_ptr<std::vector<int>> list = pair.second;
+    debug_str.append("    recvs ").append(std::to_string((*list)[0])).append(" msgs from rank ").append(std::to_string(pair.first)).append(" destined labels [ ");
+    for (auto it = ++(list->begin()); it != list->end(); ++it){
+      debug_str.append(std::to_string(*it)).append(" ");
+    }
+    debug_str.append("]\n");
+  }
+  debug_str = mpi_gather_string(debug_str);
+  if (world_proc_rank == 0){
+    std::cout<<std::endl<<std::string(debug_str).append("]")<<std::endl;
+  }
+#endif
+  // END ################
+
+
+//  delete recvfrom_rank_to_msgcount_and_destined_labels;
   delete sendto_rank_to_msgcount_and_destined_labels;
   delete label_to_world_rank;
   delete [] global_vertex_labels;

@@ -53,7 +53,7 @@ void parallel_ops::simple_graph_partition(const char *file, int global_vertex_co
   int local_vertex_count = (world_proc_rank < r) ? q+1: q;
   int skip_vertex_count = q*world_proc_rank + (world_proc_rank < r ? world_proc_rank : r);
 
-#ifndef NDEBUG
+#ifdef LONG_DEBUG
   std::string debug_str = (world_proc_rank==0) ? "DEBUG: simple_graph_partition: 1: q,r,localvc  [ " : " ";
   debug_str.append("[").append(std::to_string(q)).append(",").append(std::to_string(r)).append(",").append(std::to_string(local_vertex_count)).append("] ");
   debug_str = mpi_gather_string(debug_str);

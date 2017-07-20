@@ -89,7 +89,7 @@ void parallel_ops::simple_graph_partition(const char *file, int global_vertex_co
   std::chrono::duration<double> elapsed_seconds = end-start;
 
 #ifndef NDEBUG
-  debug_str = (world_proc_rank==0) ? "DEBUG: simple_graph_partition: 2: graph_read elapsed  [ " : " ";
+  std::string debug_str = (world_proc_rank==0) ? "DEBUG: simple_graph_partition: 2: graph_read elapsed  [ " : " ";
   debug_str.append(std::to_string(elapsed_seconds.count())).append(" ");
   debug_str = mpi_gather_string(debug_str);
   if (world_proc_rank == 0){

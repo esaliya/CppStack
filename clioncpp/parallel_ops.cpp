@@ -7,7 +7,6 @@
 #include <iostream>
 #include <fstream>
 #include <chrono>
-#include <spqr.hpp>
 
 typedef std::chrono::duration<double, std::milli> ms_t;
 

@@ -11,11 +11,11 @@
 typedef std::chrono::duration<double, std::milli> ms_t;
 
 parallel_ops * parallel_ops::initialize(int *argc, char ***argv) {
-    int rank, count;
-    MPI_Init(argc, argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &count);
-    return new parallel_ops(rank, count);
+  int rank, count;
+  MPI_Init(argc, argv);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &count);
+  return new parallel_ops(rank, count);
 }
 
 void parallel_ops::teardown_parallelism() {
@@ -23,21 +23,27 @@ void parallel_ops::teardown_parallelism() {
 }
 
 parallel_ops::~parallel_ops() {
-    // do nothing
+  delete recvfrom_rank_to_recv_buffer;
+  recvfrom_rank_to_recv_buffer = nullptr;
+  delete sendto_rank_to_send_buffer;
+  sendto_rank_to_send_buffer = nullptr;
 }
 
 parallel_ops::parallel_ops(int world_proc_rank, int world_procs_count) :
-        world_proc_rank(world_proc_rank),
-        world_procs_count(world_procs_count) {
+    world_proc_rank(world_proc_rank),
+    world_procs_count(world_procs_count) {
+}
 
+void parallel_ops:: set_max_msg_size(int size){
+  max_msg_size = size;
 }
 
 int parallel_ops::get_world_proc_rank() const {
-    return world_proc_rank;
+  return world_proc_rank;
 }
 
 int parallel_ops::get_world_procs_count() const {
-    return world_procs_count;
+  return world_procs_count;
 }
 
 void parallel_ops::set_parallel_decomposition(const char *file, int global_vertx_count, std::vector<std::shared_ptr<vertex>> *&vertices) {
@@ -399,7 +405,63 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
 #endif
   // END ################
 
+  // BEGIN ~~~~~~~~~~~~~~~~
+  start_ms = std::chrono::high_resolution_clock::now();
+  recvfrom_rank_to_recv_buffer = new std::map<int, std::shared_ptr<short>>();
+  for (const auto &kv : (*recvfrom_rank_to_msgcount_and_destined_labels)){
+    int recvfrom_rank = kv.first;
+    std::shared_ptr<std::vector<int>> count_and_destined_vertex_labels = kv.second;
+    int msg_count = (*count_and_destined_vertex_labels)[0];
+    std::shared_ptr<short> b = std::shared_ptr<short>(
+        new short [BUFFER_OFFSET + msg_count * max_msg_size], std::default_delete<short[]>());
+    (*recvfrom_rank_to_recv_buffer)[recvfrom_rank] = b;
+    int current_msg = 0;
+    for (int i = 1; i < count_and_destined_vertex_labels->size(); ){
+      int val = (*count_and_destined_vertex_labels)[i];
+      if (val >= 0){
+        std::shared_ptr<vertex> vertex = (*label_to_vertex)[val];
+        vertex->recv_buffers->push_back(
+            std::make_shared<recv_vertex_buffer>(current_msg, b, recvfrom_rank, MSG_SIZE_OFFSET));
+        vertex->recvd_msgs->push_back(std::make_shared<message>());
+        ++current_msg;
+        ++i;
+      } else if (val < 0){
+        // message intended for multiple vertices
+        int intended_vertex_count = -1 * val;
+        for (int j = i+1; j <= intended_vertex_count+i; ++j){
+          val = (*count_and_destined_vertex_labels)[j];
+          std::shared_ptr<vertex> vertex = (*label_to_vertex)[val];
+          vertex->recv_buffers->push_back(
+              std::make_shared<recv_vertex_buffer>(current_msg, b, recvfrom_rank, MSG_SIZE_OFFSET));
+          vertex->recvd_msgs->push_back(std::make_shared<message>());
+        }
+        i+=intended_vertex_count+1;
+        ++current_msg;
+      }
+    }
+  }
+  end_ms = std::chrono::high_resolution_clock::now();
+  print_timing(start_ms, end_ms, "find_nbr: recvfrom_rank_to_recv_buffer");
 
+#ifdef LONG_DEBUG
+  /* print how many message counts and what are destined vertex labels (in order) for me from each rank */
+  debug_str = (world_proc_rank==0) ? "DEBUG: find_nbrs: 8: recvfrom_rank_to_recv_buffer [ \n" : "";
+  debug_str.append("  r").append(std::to_string(world_proc_rank)).append("[\n");
+  for (const auto &vertex : (*vertices)){
+    debug_str.append("    vlabel ").append(std::to_string((*vertex).label)).append(" recvs [\n");
+    for (auto &recv_buffer : (*(*vertex).recv_buffers)){
+      debug_str.append("      from rank ").append(std::to_string((*recv_buffer).get_recvfrom_rank()))
+          .append(" offset_factor ").append(std::to_string((*recv_buffer).get_offset_factor())).append("\n");
+    }
+    debug_str.append("    ]\n");
+  }
+  debug_str.append("  ]\n");
+  debug_str = mpi_gather_string(debug_str);
+  if (world_proc_rank == 0){
+    std::cout<<std::endl<<std::string(debug_str).append("]")<<std::endl;
+  }
+#endif
+  // END ~~~~~~~~~~~~~~~~
 
   delete recvfrom_rank_to_msgcount_and_destined_labels;
   delete sendto_rank_to_msgcount_and_destined_labels;

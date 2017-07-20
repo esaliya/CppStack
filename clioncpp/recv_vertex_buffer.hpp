@@ -22,6 +22,9 @@ public:
     return buffer.get()[msg_size_offset];
   }
 
+  int get_recvfrom_rank(){
+    return recvfrom_rank;
+  }
 private:
   int recvfrom_rank;
   int msg_size_offset;

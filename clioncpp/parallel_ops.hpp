@@ -12,6 +12,7 @@
 //void teardown_parallelism();
 
 #include <boost/shared_ptr.hpp>
+#include <chrono>
 #include "vertex.hpp"
 
 class parallel_ops{
@@ -36,6 +37,9 @@ private:
   void decompose_among_threads(std::vector<std::shared_ptr<vertex>> *&vertices);
   void find_nbrs(int global_vertex_count, int local_vertex_count, std::vector<std::shared_ptr<vertex>> *&vertices);
   std::string mpi_gather_string(std::string &str);
+
+  void print_timing(const std::chrono::time_point<std::chrono::high_resolution_clock> &start_ms,
+                    const std::chrono::time_point<std::chrono::high_resolution_clock> &end_ms, const std::string &msg) const;
 };
 
 #endif //CLIONCPP_PARALLEL_OPS_H

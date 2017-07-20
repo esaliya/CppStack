@@ -7,6 +7,9 @@
 #include <iostream>
 #include <fstream>
 #include <chrono>
+#include <spqr.hpp>
+
+typedef std::chrono::duration<double, std::milli> ms_t;
 
 parallel_ops * parallel_ops::initialize(int *argc, char ***argv) {
     int rank, count;
@@ -95,7 +98,6 @@ void parallel_ops::simple_graph_partition(const char *file, int global_vertex_co
   if (world_proc_rank == 0){
     std::cout<<std::endl<<std::string(debug_str).append("]")<<std::endl;
   }
-//  std::cout<<"Rank: "<<world_proc_rank<<" graph read in "<<elapsed_seconds.count()<<" s"<<std::endl;
 #endif
 
   fs.close();
@@ -119,18 +121,24 @@ void parallel_ops::decompose_among_threads(std::vector<std::shared_ptr<vertex>> 
 }
 
 void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, std::vector<std::shared_ptr<vertex>> *&vertices) {
-#ifndef NDEBUG
+  std::chrono::time_point<std::chrono::high_resolution_clock > start_ms, end_ms;
+
+#ifndef LONG_DEBUG
   int tmp_lbl = 0;
 #endif
 
+  start_ms = std::chrono::high_resolution_clock::now();
   /* Create a map to quickly lookup vertices given their label for my vertices */
   std::map<int, std::shared_ptr<vertex>> *label_to_vertex = new std::map<int, std::shared_ptr<vertex>>();
   for (std::vector<std::shared_ptr<vertex>>::iterator it = vertices->begin(); it != vertices->end(); ++it){
-#ifndef NDEBUG
+#ifndef LONG_DEBUG
     tmp_lbl = (*it)->label;
 #endif
     (*label_to_vertex)[(*it)->label] = *it;
   }
+  end_ms = std::chrono::high_resolution_clock::now();
+  print_timing(start_ms, end_ms, "find_nbr: label_to_vertex map creation");
+
 
 #ifdef LONG_DEBUG
   /* Check vertex label to vertex map */
@@ -173,6 +181,7 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
   }
 #endif
 
+  start_ms = std::chrono::high_resolution_clock::now();
   int *global_vertex_labels = new int[global_vertex_count];
   int offset = local_vertex_displas[world_proc_rank];
   for (int i = 0; i < local_vertex_count; ++i){
@@ -180,6 +189,8 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
   }
   MPI_Allgatherv(MPI_IN_PLACE, local_vertex_count, MPI_INT, global_vertex_labels,
                  local_vertex_counts, local_vertex_displas, MPI_INT, MPI_COMM_WORLD);
+  end_ms = std::chrono::high_resolution_clock::now();
+  print_timing(start_ms, end_ms, "find_nbr: global_vertex_labels allgather");
 
 #ifdef LONG_DEBUG
   /* Check global vertex labels */
@@ -198,6 +209,7 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
 
   /* Just keep in mind this map and the global_vertex_labels can be really large
    * Think of optimizations if this becomes a bottleneck */
+  start_ms = std::chrono::high_resolution_clock::now();
   std::map<int,int> *label_to_world_rank = new std::map<int,int>();
   for (int rank = 0; rank < world_procs_count; ++rank){
     for (int i = 0; i < local_vertex_counts[rank]; ++i){
@@ -205,8 +217,11 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
       (*label_to_world_rank)[global_vertex_labels[i + offset]] = rank;
     }
   }
+  end_ms = std::chrono::high_resolution_clock::now();
+  print_timing(start_ms, end_ms, "find_nbr: label_to_world_rank map creation");
 
   /* Set where out-neighbors of vertices live */
+  start_ms = std::chrono::high_resolution_clock::now();
   for (const std::shared_ptr<vertex> &v : (*vertices)){
     std::map<int, int> *outnbr_label_to_world_rank = v->outnbr_lbl_to_world_rank;
     for (const auto &kv : (*outnbr_label_to_world_rank)){
@@ -214,6 +229,8 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
       (*outnbr_label_to_world_rank)[kv.first] = rank;
     }
   }
+  end_ms = std::chrono::high_resolution_clock::now();
+  print_timing(start_ms, end_ms, "find_nbr: set outnbr_label_to_world_rank for each my v");
 
 #ifdef LONG_DEBUG
   debug_str = (world_proc_rank==0) ? "DEBUG: find_nbrs: 5: out_nbrs [ \n" : " ";
@@ -235,6 +252,7 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
   /* The following sections are very subtle, so keep your eyes open */
 
   // BEGIN ----------------
+  start_ms = std::chrono::high_resolution_clock::now();
   std::map<int, std::shared_ptr<std::vector<int>>> *sendto_rank_to_msgcount_and_destined_labels
       = new std::map<int, std::shared_ptr<std::vector<int>>>();
   int msg_size = 0;
@@ -291,6 +309,8 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
 
     delete inverse_map;
   }
+  end_ms = std::chrono::high_resolution_clock::now();
+  print_timing(start_ms, end_ms, "find_nbr: sendto_rank_to_msgcount_and_destined_labels");
 
 #ifdef LONG_DEBUG
   /* print how many message counts and what are destined vertex labels (in order) for each rank from me */
@@ -313,6 +333,7 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
   // END ----------------
 
   // BEGIN ################
+  start_ms = std::chrono::high_resolution_clock::now();
   int max_buffer_size = -1;
   MPI_Allreduce(&msg_size, &max_buffer_size, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
   max_buffer_size += 1; // +1 to send msgSize
@@ -357,6 +378,8 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
     }
   }
   delete [] buffer;
+  end_ms = std::chrono::high_resolution_clock::now();
+  print_timing(start_ms, end_ms, "find_nbr: recvfrom_rank_to_msgcount_and_destined_labels");
 
 #ifdef LONG_DEBUG
   /* print how many message counts and what are destined vertex labels (in order) for me from each rank */
@@ -376,6 +399,7 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
   }
 #endif
   // END ################
+
 
 
   delete recvfrom_rank_to_msgcount_and_destined_labels;
@@ -398,6 +422,21 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
     std::cout<<std::endl<<std::string(debug_str)<<std::endl;
   }
 #endif
+}
+
+void parallel_ops::print_timing(
+    const std::chrono::time_point<std::chrono::high_resolution_clock> &start_ms,
+    const std::chrono::time_point<std::chrono::high_resolution_clock> &end_ms,
+    const std::string &msg) const {
+  double duration_ms, avg_duration_ms, min_duration_ms, max_duration_ms;
+  duration_ms = (ms_t(end_ms - start_ms)).count();
+  MPI_Reduce(&duration_ms, &min_duration_ms, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&duration_ms, &max_duration_ms, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&duration_ms, &avg_duration_ms, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  if (world_proc_rank == 0){
+    std::cout<<msg<<" [min max avg]ms: ["<< min_duration_ms
+             << " " << max_duration_ms << " " << (avg_duration_ms / world_procs_count) << "]" <<std::endl;
+  }
 }
 
 std::string parallel_ops::mpi_gather_string(std::string &str) {

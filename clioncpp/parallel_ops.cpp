@@ -413,7 +413,7 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
     std::shared_ptr<std::vector<int>> count_and_destined_vertex_labels = kv.second;
     int msg_count = (*count_and_destined_vertex_labels)[0];
     std::shared_ptr<short> b = std::shared_ptr<short>(
-        new short [BUFFER_OFFSET + msg_count * max_msg_size], std::default_delete<short[]>());
+        new short [BUFFER_OFFSET + msg_count * max_msg_size](), std::default_delete<short[]>());
     (*recvfrom_rank_to_recv_buffer)[recvfrom_rank] = b;
     int current_msg = 0;
     for (int i = 1; i < count_and_destined_vertex_labels->size(); ){
@@ -444,7 +444,7 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
   print_timing(start_ms, end_ms, "find_nbr: recvfrom_rank_to_recv_buffer");
 
 #ifdef LONG_DEBUG
-  /* print how many message counts and what are destined vertex labels (in order) for me from each rank */
+  /* print recvfrom_rank_to_recv_buffer */
   debug_str = (world_proc_rank==0) ? "DEBUG: find_nbrs: 8: recvfrom_rank_to_recv_buffer [ \n" : "";
   debug_str.append("  r").append(std::to_string(world_proc_rank)).append("[\n");
   for (const auto &vertex : (*vertices)){
@@ -463,6 +463,67 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
 #endif
   // END ~~~~~~~~~~~~~~~~
 
+  // BEGIN ================
+  start_ms = std::chrono::high_resolution_clock::now();
+  sendto_rank_to_send_buffer = new std::map<int, std::shared_ptr<short>>();
+  for (const auto &kv : (*sendto_rank_to_msgcount_and_destined_labels)){
+    int sendto_rank = kv.first;
+    std::shared_ptr<std::vector<int>> count_and_destined_vertex_labels = kv.second;
+    int msg_count = (*count_and_destined_vertex_labels)[0];
+    std::shared_ptr<short> b = std::shared_ptr<short>(
+        new short[BUFFER_OFFSET + msg_count * max_msg_size](), std::default_delete<short[]>());
+    // msg_count is an integer, so we'll pack it as two short values
+    // to reconstruct the integer, do (firstHalf << 16) | (secondHalf & 0xffff)
+    b.get()[MSG_COUNT_OFFSET] = (short) (msg_count >> 16);
+    b.get()[MSG_COUNT_OFFSET+1] = (short) (msg_count & 0xffff);
+    (*sendto_rank_to_send_buffer)[sendto_rank] = b;
+  }
+
+  std::map<int,int> *outrank_to_offset_factor = new std::map<int,int>();
+  for (const std::shared_ptr<vertex> &vertex : (*vertices)){
+    for (const auto &kv : *(*vertex).outrank_to_send_buffer){
+      int outrank = kv.first;
+      if(outrank_to_offset_factor->find(outrank) == outrank_to_offset_factor->end()){
+        (*outrank_to_offset_factor)[outrank] = 0;
+      } else {
+        ++(*outrank_to_offset_factor)[outrank];
+      }
+      std::shared_ptr<vertex_buffer> vertex_send_buffer = (*vertex->outrank_to_send_buffer)[outrank];
+      vertex_send_buffer->set_offset_factor((*outrank_to_offset_factor)[outrank]);
+      vertex_send_buffer->set_buffer((*sendto_rank_to_send_buffer)[outrank]);
+    }
+  }
+  end_ms = std::chrono::high_resolution_clock::now();
+  print_timing(start_ms, end_ms, "find_nbr: sendto_rank_to_send_buffer");
+
+#ifdef LONG_DEBUG
+  /* print sendto_rank_to_send_buffer */
+  debug_str = (world_proc_rank==0) ? "DEBUG: find_nbrs: 9: sendto_rank_to_send_buffer [ \n" : "";
+  debug_str.append("  r").append(std::to_string(world_proc_rank)).append("[ ");
+  int recvfrom_rank_count = (int) recvfrom_rank_to_msgcount_and_destined_labels->size();
+  int recv_msg_count = 0;
+  for (const auto &kv : (*recvfrom_rank_to_msgcount_and_destined_labels)){
+    recv_msg_count += (*kv.second)[0];
+  }
+  int sendto_rank_count = (int) sendto_rank_to_msgcount_and_destined_labels->size();
+  int send_msg_count = 0;
+  for (const auto &kv : (*sendto_rank_to_msgcount_and_destined_labels)){
+    send_msg_count += (*kv.second)[0];
+  }
+
+  debug_str.append(std::to_string(recvfrom_rank_count)).append(" ")
+      .append(std::to_string(recv_msg_count)).append(" ")
+      .append(std::to_string(sendto_rank_count)).append(" ")
+      .append(std::to_string(send_msg_count));
+  debug_str.append(" ]\n");
+  debug_str = mpi_gather_string(debug_str);
+  if (world_proc_rank == 0){
+    std::cout<<std::endl<<std::string(debug_str).append("]")<<std::endl;
+  }
+#endif
+  // END ================
+
+  delete outrank_to_offset_factor;
   delete recvfrom_rank_to_msgcount_and_destined_labels;
   delete sendto_rank_to_msgcount_and_destined_labels;
   delete label_to_world_rank;
@@ -482,6 +543,10 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
   if (world_proc_rank == 0){
     std::cout<<std::endl<<std::string(debug_str)<<std::endl;
   }
+#endif
+
+#ifndef NDEBUG
+
 #endif
 }
 

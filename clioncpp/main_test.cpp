@@ -13,6 +13,39 @@
 #include <set>
 #include "test_map_class.hpp"
 
+void map_increment(){
+  std::map<int,int> *map = new std::map<int,int>();
+  (*map)[2] = 234;
+  if (map->find(2) != map->end()){
+    ++(*map)[2];
+  }
+
+  for (const auto &kv : *map){
+    std::cout<<kv.first<<" "<<kv.second<<std::endl;
+  }
+
+  delete map;
+}
+
+
+void shared_ptr_to_array(){
+  std::shared_ptr<short> b = std::shared_ptr<short>(new short[10](), std::default_delete<short[]>());
+  b.get()[3] = 72;
+  for (int i = 0; i < 10; ++i){
+    std::cout<<b.get()[i]<<std::endl;
+  }
+}
+
+void int_to_short_test(){
+  int original = 70345588;
+
+  short firstHalf = (short) (original >> 16);
+  short secondHalf = (short) (original & 0xffff);
+
+  int reconstituted = (firstHalf << 16) | (secondHalf & 0xffff);
+  std::cout<<original<<"  "<<reconstituted<<std::endl;
+}
+
 void vector_test(){
   std::shared_ptr<std::vector<int>> v = std::make_shared<std::vector<int>>();
   v->push_back(10);
@@ -253,7 +286,10 @@ void test(){
 }
 
 int main() {
-  vector_test();
+  map_increment();
+//  shared_ptr_to_array();
+//  int_to_short_test();
+//  vector_test();
 //  sizeof_test();
 //  assign_to_pointer_test2();
 //  assign_to_pointer_test();

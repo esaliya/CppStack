@@ -549,7 +549,7 @@ void parallel_ops::test_string_allreduce() {/* Allreduce string test */
   if (world_proc_rank == 0){
     debug_str = debug_str.append("wonderful");
   }
-  debug_str.append(std::__cxx11::to_string(world_proc_rank)).append("]");
+  debug_str.append(std::to_string(world_proc_rank)).append("]");
   debug_str = mpi_gather_string(debug_str);
   if (world_proc_rank == 0){
     std::cout << std::endl << std::string(debug_str) << std::endl;
@@ -577,9 +577,9 @@ void parallel_ops::test_isend_irecv() {/* test ISend/IRecv */
   MPI_Status *status = new MPI_Status[2]();
   MPI_Waitall(2, requests, status);
 
-  std::__cxx11::string debug_str = (world_proc_rank == 0) ? "DEBUG: find_nbrs: 10: ISend/Irecv [ \n" : "";
-  debug_str.append("  r").append(std::__cxx11::to_string(world_proc_rank)).append("[ ");
-  debug_str.append(std::__cxx11::to_string(buff[0])).append(" ").append(std::__cxx11::to_string(buff[1]));
+  std::string debug_str = (world_proc_rank == 0) ? "DEBUG: find_nbrs: 10: ISend/Irecv [ \n" : "";
+  debug_str.append("  r").append(std::to_string(world_proc_rank)).append("[ ");
+  debug_str.append(std::to_string(buff[0])).append(" ").append(std::to_string(buff[1]));
   debug_str.append(" ]\n");
   debug_str = mpi_gather_string(debug_str);
   if (world_proc_rank == 0){

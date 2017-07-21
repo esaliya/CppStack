@@ -545,14 +545,14 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
 }
 
 void parallel_ops::test_string_allreduce() {/* Allreduce string test */
-  std::__cxx11::string debug_str = "[hello";
+  std::string debug_str = "[hello";
   if (world_proc_rank == 0){
     debug_str = debug_str.append("wonderful");
   }
   debug_str.append(std::__cxx11::to_string(world_proc_rank)).append("]");
   debug_str = mpi_gather_string(debug_str);
   if (world_proc_rank == 0){
-    std::cout << std::endl << string(debug_str) << std::endl;
+    std::cout << std::endl << std::string(debug_str) << std::endl;
   }
 }
 
@@ -583,7 +583,7 @@ void parallel_ops::test_isend_irecv() {/* test ISend/IRecv */
   debug_str.append(" ]\n");
   debug_str = mpi_gather_string(debug_str);
   if (world_proc_rank == 0){
-    std::cout << std::endl << string(debug_str).append("]") << std::endl;
+    std::cout << std::endl << std::string(debug_str).append("]") << std::endl;
   }
 
   delete [] status;

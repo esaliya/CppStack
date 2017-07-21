@@ -26,6 +26,8 @@ public:
 
   void teardown_parallelism();
   void set_parallel_decomposition(const char* file, int global_vertx_count, std::vector<std::shared_ptr<vertex>> *&vertices);
+  void send_msgs(int msg_size);
+  void recv_msgs();
 
   static parallel_ops * initialize(int *argc, char ***argv);
 
@@ -40,8 +42,9 @@ private:
 
   // Maximum message size sent by a vertex. To be set later correctly.
   int max_msg_size = 500;
-  int recv_request_offset;
-  MPI_Request *send_recv_requests = nullptr;
+  int recv_req_offset;
+  MPI_Request *send_recv_reqs = nullptr;
+  int msg_size_to_recv;
 
   std::map<int, std::shared_ptr<short>> *recvfrom_rank_to_recv_buffer = nullptr;
   std::map<int, std::shared_ptr<short>> *sendto_rank_to_send_buffer = nullptr;

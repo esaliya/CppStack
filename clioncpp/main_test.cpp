@@ -13,6 +13,21 @@
 #include <set>
 #include "test_map_class.hpp"
 
+void shared_ptr_array_copy(){
+  int size = 10;
+  std::shared_ptr<short> b = std::shared_ptr<short>(new short[size](), std::default_delete<short[]>());
+  std::shared_ptr<short> rb = std::shared_ptr<short>(new short[size](), std::default_delete<short[]>());
+  for (int i = 0; i < 10; ++i){
+    b.get()[i] = (short) (size - i);
+  }
+  
+  std::copy(b.get(), b.get()+size, rb.get());
+  
+  for (int i = 0; i < 10; ++i){
+    std::cout<<rb.get()[i]<<std::endl;
+  }
+}
+
 void map_increment(){
   std::map<int,int> *map = new std::map<int,int>();
   (*map)[2] = 234;
@@ -286,7 +301,8 @@ void test(){
 }
 
 int main() {
-  map_increment();
+  shared_ptr_array_copy();
+//  map_increment();
 //  shared_ptr_to_array();
 //  int_to_short_test();
 //  vector_test();

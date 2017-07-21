@@ -23,8 +23,8 @@ void parallel_ops::teardown_parallelism() {
 }
 
 parallel_ops::~parallel_ops() {
-  delete send_recv_requests;
-  send_recv_requests = nullptr;
+  delete send_recv_reqs;
+  send_recv_reqs = nullptr;
   delete recvfrom_rank_to_recv_buffer;
   recvfrom_rank_to_recv_buffer = nullptr;
   delete sendto_rank_to_send_buffer;
@@ -531,8 +531,8 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
   int num_recvfrom_ranks = (int) ((recvfrom_rank_to_recv_buffer->find(world_proc_rank) != recvfrom_rank_to_recv_buffer->end())
                            ? recvfrom_rank_to_recv_buffer->size() - 1
                            : recvfrom_rank_to_recv_buffer->size());
-  recv_request_offset = num_sendto_ranks;
-  send_recv_requests = new MPI_Request[num_sendto_ranks+num_recvfrom_ranks]();
+  recv_req_offset = num_sendto_ranks;
+  send_recv_reqs = new MPI_Request[num_sendto_ranks+num_recvfrom_ranks]();
 
   delete outrank_to_offset_factor;
   delete recvfrom_rank_to_msgcount_and_destined_labels;
@@ -628,4 +628,32 @@ std::string parallel_ops::mpi_gather_string(std::string &str) {
   delete [] displas;
   delete [] lengths;
   return r;
+}
+
+void parallel_ops::send_msgs(int msg_size) {
+  msg_size_to_recv = msg_size;
+  int req_count = 0;
+  for (const auto &kv : (*sendto_rank_to_send_buffer)){
+    int sendto_rank = kv.first;
+    std::shared_ptr<short> buffer = kv.second;
+    buffer.get()[MSG_SIZE_OFFSET] = (short)msg_size;
+    int msg_count = ((buffer.get()[MSG_COUNT_OFFSET]) << 16 | (buffer.get()[MSG_COUNT_OFFSET+1] & 0xffff));
+    // This is different from buffer size, which is
+    // BUFFER_OFFSET + msg_count * max_msg_size
+    // Notice here we use msg_size instead of max_msg_size
+    int buffer_content_size = BUFFER_OFFSET + msg_count * msg_size;
+
+    if (sendto_rank == world_proc_rank){
+      // local copy
+      std::shared_ptr<short> b = (*recvfrom_rank_to_recv_buffer)[world_proc_rank];
+      std::copy(buffer.get(), buffer.get()+buffer_content_size, b.get());
+    } else {
+      MPI_Isend(buffer.get(), buffer_content_size, MPI_SHORT, sendto_rank, 99, MPI_COMM_WORLD, &send_recv_reqs[req_count]);
+      ++req_count;
+    }
+  }
+}
+
+void parallel_ops::recv_msgs() {
+
 }

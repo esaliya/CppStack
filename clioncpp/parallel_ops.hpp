@@ -18,9 +18,13 @@
 
 class parallel_ops{
 public:
+  std::shared_ptr<int> thread_id_to_vertex_offset = nullptr;
+  std::shared_ptr<int> thread_id_to_vertex_count = nullptr;
+
   int get_world_proc_rank() const;
   int get_world_procs_count() const;
   void set_max_msg_size(int size);
+  void set_thread_count(int count);
 
   ~parallel_ops();
 
@@ -42,6 +46,8 @@ private:
 
   // Maximum message size sent by a vertex. To be set later correctly.
   int max_msg_size = 500;
+  int thread_count = 1;
+
   int recv_req_offset;
   MPI_Request *send_recv_reqs = nullptr;
   MPI_Status *send_recv_reqs_status = nullptr;

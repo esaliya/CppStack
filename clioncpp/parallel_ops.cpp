@@ -44,6 +44,10 @@ void parallel_ops:: set_max_msg_size(int size){
   max_msg_size = size;
 }
 
+void parallel_ops::set_thread_count(int count) {
+  thread_count = count;
+}
+
 int parallel_ops::get_world_proc_rank() const {
   return world_proc_rank;
 }
@@ -128,7 +132,20 @@ void parallel_ops::simple_graph_partition(const char *file, int global_vertex_co
 }
 
 void parallel_ops::decompose_among_threads(std::vector<std::shared_ptr<vertex>> *&vertices) {
-
+  int length = (int) vertices->size();
+  int p = length / thread_count;
+  int q = length % thread_count;
+  thread_id_to_vertex_offset = std::shared_ptr<int>(new int[thread_count](), std::default_delete<int[]>());
+  thread_id_to_vertex_count = std::shared_ptr<int>(new int[thread_count](), std::default_delete<int[]>());
+  for (int i = 0; i < thread_count; ++i){
+    thread_id_to_vertex_count.get()[i] = (i < q) ? (p+1) : p;
+  }
+  thread_id_to_vertex_offset.get()[0] = 0;
+  for (int i = 1; i < thread_count; ++i){
+    thread_id_to_vertex_offset.get()[i]
+        = thread_id_to_vertex_offset.get()[i-1]
+          + thread_id_to_vertex_count.get()[i-1];
+  }
 }
 
 void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, std::vector<std::shared_ptr<vertex>> *&vertices) {

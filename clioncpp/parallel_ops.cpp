@@ -23,7 +23,11 @@ void parallel_ops::teardown_parallelism() {
 }
 
 parallel_ops::~parallel_ops() {
-  delete send_recv_reqs;
+  delete recvfrom_rank_to_msgcount_and_destined_labels;
+  recvfrom_rank_to_msgcount_and_destined_labels = nullptr;
+  delete [] send_recv_reqs_status;
+  send_recv_reqs_status = nullptr;
+  delete [] send_recv_reqs;
   send_recv_reqs = nullptr;
   delete recvfrom_rank_to_recv_buffer;
   recvfrom_rank_to_recv_buffer = nullptr;
@@ -344,7 +348,7 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
   int max_buffer_size = -1;
   MPI_Allreduce(&msg_size, &max_buffer_size, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
   max_buffer_size += 1; // +1 to send msgSize
-  std::map<int, std::shared_ptr<std::vector<int>>> *recvfrom_rank_to_msgcount_and_destined_labels
+  recvfrom_rank_to_msgcount_and_destined_labels
       = new std::map<int, std::shared_ptr<std::vector<int>>>();
   int *buffer = new int[max_buffer_size];
   for (int rank = 0; rank < world_procs_count; ++rank){
@@ -532,10 +536,11 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
                            ? recvfrom_rank_to_recv_buffer->size() - 1
                            : recvfrom_rank_to_recv_buffer->size());
   recv_req_offset = num_sendto_ranks;
-  send_recv_reqs = new MPI_Request[num_sendto_ranks+num_recvfrom_ranks]();
+  total_reqs = num_sendto_ranks+num_recvfrom_ranks;
+  send_recv_reqs = new MPI_Request[total_reqs]();
+  send_recv_reqs_status = new MPI_Status[total_reqs]();
 
   delete outrank_to_offset_factor;
-  delete recvfrom_rank_to_msgcount_and_destined_labels;
   delete sendto_rank_to_msgcount_and_destined_labels;
   delete label_to_world_rank;
   delete [] global_vertex_labels;
@@ -648,12 +653,25 @@ void parallel_ops::send_msgs(int msg_size) {
       std::shared_ptr<short> b = (*recvfrom_rank_to_recv_buffer)[world_proc_rank];
       std::copy(buffer.get(), buffer.get()+buffer_content_size, b.get());
     } else {
-      MPI_Isend(buffer.get(), buffer_content_size, MPI_SHORT, sendto_rank, 99, MPI_COMM_WORLD, &send_recv_reqs[req_count]);
+      MPI_Isend(buffer.get(), buffer_content_size, MPI_SHORT, sendto_rank, world_proc_rank, MPI_COMM_WORLD, &send_recv_reqs[req_count]);
       ++req_count;
     }
   }
 }
 
 void parallel_ops::recv_msgs() {
+  int req_count = 0;
+  for (const auto &kv : (*recvfrom_rank_to_recv_buffer)){
+    int recvfrom_rank = kv.first;
+    std::shared_ptr<short> buffer = kv.second;
+    int msg_count = (*(*recvfrom_rank_to_msgcount_and_destined_labels)[recvfrom_rank])[0];
+    if (recvfrom_rank != world_proc_rank){
+      MPI_Irecv(buffer.get(), BUFFER_OFFSET + msg_count * msg_size_to_recv,
+                MPI_SHORT, recvfrom_rank, recvfrom_rank, MPI_COMM_WORLD,
+                &send_recv_reqs[req_count+recv_req_offset]);
+      ++req_count;
+    }
+  }
 
+  MPI_Waitall(total_reqs, send_recv_reqs, send_recv_reqs_status);
 }

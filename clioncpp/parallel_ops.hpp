@@ -44,8 +44,11 @@ private:
   int max_msg_size = 500;
   int recv_req_offset;
   MPI_Request *send_recv_reqs = nullptr;
+  MPI_Status *send_recv_reqs_status = nullptr;
+  int total_reqs;
   int msg_size_to_recv;
 
+  std::map<int, std::shared_ptr<std::vector<int>>> *recvfrom_rank_to_msgcount_and_destined_labels = nullptr;
   std::map<int, std::shared_ptr<short>> *recvfrom_rank_to_recv_buffer = nullptr;
   std::map<int, std::shared_ptr<short>> *sendto_rank_to_send_buffer = nullptr;
 

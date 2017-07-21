@@ -40,14 +40,6 @@ parallel_ops::parallel_ops(int world_proc_rank, int world_procs_count) :
     world_procs_count(world_procs_count) {
 }
 
-void parallel_ops:: set_max_msg_size(int size){
-  max_msg_size = size;
-}
-
-void parallel_ops::set_thread_count(int count) {
-  thread_count = count;
-}
-
 int parallel_ops::get_world_proc_rank() const {
   return world_proc_rank;
 }

@@ -33,3 +33,8 @@ const char *CMD_OPTION_DESCRIPTION_TC = "Thread count";
 const char *CMD_OPTION_SHORT_MMS = "mms";
 const char *CMD_OPTION_DESCRIPTION_MMS = "Maximum message size in shorts";
 
+const char *CMD_OPTION_SHORT_PI = "pi";
+const char *CMD_OPTION_DESCRIPTION_PI = "Parallel instance id";
+
+const char *CMD_OPTION_SHORT_PIC = "pic";
+const char *CMD_OPTION_DESCRIPTION_PIC = "Parallel instance count";

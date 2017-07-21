@@ -9,9 +9,21 @@
 #include "constants.h"
 #include "utils.hpp"
 
-int parse_args(int argc, char **argv, parallel_ops *pOps);
-
+typedef std::chrono::duration<double, std::milli> ms_t;
+typedef std::chrono::time_point<std::chrono::high_resolution_clock> ticks_t;
 namespace po = boost::program_options;
+
+int parse_args(int argc, char **argv, parallel_ops *pOps);
+void run_program(std::vector<std::shared_ptr<vertex>> *vertices);
+void init_comp(std::vector<std::shared_ptr<vertex>> *vertices);
+bool run_graph_comp(int loop_id, std::vector<std::shared_ptr<vertex>> *vertices);
+void run_super_steps(std::vector<std::shared_ptr<vertex>> *vertices, int iter, int thread_id, ticks_t &start_time);
+void compute(int iter, std::vector<std::shared_ptr<vertex>> *vertices, int super_step, int thread_id);
+void recv_msgs(std::vector<std::shared_ptr<vertex>> *vertices, int super_step);
+void process_recvd_msgs(std::vector<std::shared_ptr<vertex>> *vertices, int super_step, int thread_id);
+void send_msgs(std::vector<std::shared_ptr<vertex>> *vertices, int super_step);
+void finalize_iteration(std::vector<std::shared_ptr<vertex>> *vertices, int thread_id);
+void finalize_iterations(std::vector<std::shared_ptr<vertex>> *vertices);
 
 int vertex_count;
 int k;
@@ -20,16 +32,24 @@ double alpha;
 double epsilon;
 std::string input_file;
 std::string partition_file;
-int node_count;
-int thread_count;
-int max_msg_size;
+
+// default values;
+int node_count = 1;
+int thread_count = 1;
+int max_msg_size = 500;
+int parallel_instance_id = 0;
+int parallel_instance_count = 1;
 
 parallel_ops *p_ops;
 
 int main(int argc, char **argv) {
 
   p_ops = parallel_ops::initialize(&argc, &argv);
-  parse_args(argc, argv, p_ops);
+  int ret = parse_args(argc, argv, p_ops);
+  if (ret < 0){
+    p_ops->teardown_parallelism();
+    return ret;
+  }
 
   std::vector<std::shared_ptr<vertex>> *vertices = nullptr;
   p_ops->set_parallel_decomposition(input_file.c_str(), vertex_count, vertices);
@@ -59,6 +79,8 @@ int parse_args(int argc, char **argv, parallel_ops *p_ops) {
       (CMD_OPTION_SHORT_NC, po::value<int>(), CMD_OPTION_DESCRIPTION_NC)
       (CMD_OPTION_SHORT_TC, po::value<int>(), CMD_OPTION_DESCRIPTION_TC)
       (CMD_OPTION_SHORT_MMS, po::value<int>(), CMD_OPTION_DESCRIPTION_MMS)
+      (CMD_OPTION_SHORT_PI, po::value<int>(), CMD_OPTION_DESCRIPTION_PI)
+      (CMD_OPTION_SHORT_PIC, po::value<int>(), CMD_OPTION_DESCRIPTION_PIC)
       ;
 
   po::variables_map vm;
@@ -133,21 +155,39 @@ int parse_args(int argc, char **argv, parallel_ops *p_ops) {
       std::cout<<"ERROR: Node count not specified"<<std::endl;
     return -1;
   }
+  p_ops->node_count = node_count;
 
   if(vm.count(CMD_OPTION_SHORT_TC)){
     thread_count = vm[CMD_OPTION_SHORT_TC].as<int>();
   }else {
     if (is_rank0)
-      std::cout<<"ERROR: Thread count not specified"<<std::endl;
-    return -1;
+      std::cout<<"INFO: Thread count not specified, assuming "<<thread_count<<std::endl;
   }
+  p_ops->thread_count = thread_count;
 
   if(vm.count(CMD_OPTION_SHORT_MMS)){
     max_msg_size = vm[CMD_OPTION_SHORT_MMS].as<int>();
   }else {
     if (is_rank0)
-      std::cout<<"INFO: Max message size not specified"<<std::endl;
+      std::cout<<"INFO: Max message size not specified, assuming "<<max_msg_size<<std::endl;
   }
+  p_ops->max_msg_size = max_msg_size;
+
+  if(vm.count(CMD_OPTION_SHORT_PI)){
+    parallel_instance_id = vm[CMD_OPTION_SHORT_PI].as<int>();
+  }else {
+    if (is_rank0)
+      std::cout<<"INFO: Parallel instance id not specified, assuming "<<parallel_instance_id<<std::endl;
+  }
+  p_ops->parallel_instance_id = parallel_instance_id;
+
+  if(vm.count(CMD_OPTION_SHORT_PIC)){
+    parallel_instance_count = vm[CMD_OPTION_SHORT_PIC].as<int>();
+  }else {
+    if (is_rank0)
+      std::cout<<"INFO: Parallel instance count not specified, assuming "<<parallel_instance_count<<std::endl;
+  }
+  p_ops->parallel_instance_count = parallel_instance_count;
 
   return 0;
 }

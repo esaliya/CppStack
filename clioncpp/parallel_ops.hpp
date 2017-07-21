@@ -18,13 +18,18 @@
 
 class parallel_ops{
 public:
+  int parallel_instance_id = 0;
+  int parallel_instance_count = 1;
+  // Maximum message size sent by a vertex. To be set later correctly.
+  int max_msg_size = 500;
+  int thread_count = 1;
+  int node_count = 1;
+
   std::shared_ptr<int> thread_id_to_vertex_offset = nullptr;
   std::shared_ptr<int> thread_id_to_vertex_count = nullptr;
 
   int get_world_proc_rank() const;
   int get_world_procs_count() const;
-  void set_max_msg_size(int size);
-  void set_thread_count(int count);
 
   ~parallel_ops();
 
@@ -44,10 +49,6 @@ private:
   int world_proc_rank;
   int world_procs_count;
 
-  // Maximum message size sent by a vertex. To be set later correctly.
-  int max_msg_size = 500;
-  int thread_count = 1;
-
   int recv_req_offset;
   MPI_Request *send_recv_reqs = nullptr;
   MPI_Status *send_recv_reqs_status = nullptr;
@@ -59,7 +60,6 @@ private:
   std::map<int, std::shared_ptr<short>> *sendto_rank_to_send_buffer = nullptr;
 
   parallel_ops(int world_proc_rank, int world_procs_count);
-
 
   void simple_graph_partition(const char* file, int global_vertex_count, std::vector<std::shared_ptr<vertex>> *&vertices);
   void decompose_among_threads(std::vector<std::shared_ptr<vertex>> *&vertices);

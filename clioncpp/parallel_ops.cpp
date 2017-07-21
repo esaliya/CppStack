@@ -23,6 +23,8 @@ void parallel_ops::teardown_parallelism() {
 }
 
 parallel_ops::~parallel_ops() {
+  delete send_recv_requests;
+  send_recv_requests = nullptr;
   delete recvfrom_rank_to_recv_buffer;
   recvfrom_rank_to_recv_buffer = nullptr;
   delete sendto_rank_to_send_buffer;
@@ -523,6 +525,15 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
 #endif
   // END ================
 
+  int num_sendto_ranks = (int) ((sendto_rank_to_send_buffer->find(world_proc_rank) != sendto_rank_to_send_buffer->end())
+                           ? sendto_rank_to_send_buffer->size()-1
+                           : sendto_rank_to_send_buffer->size());
+  int num_recvfrom_ranks = (int) ((recvfrom_rank_to_recv_buffer->find(world_proc_rank) != recvfrom_rank_to_recv_buffer->end())
+                           ? recvfrom_rank_to_recv_buffer->size() - 1
+                           : recvfrom_rank_to_recv_buffer->size());
+  recv_request_offset = num_sendto_ranks;
+  send_recv_requests = new MPI_Request[num_sendto_ranks+num_recvfrom_ranks]();
+
   delete outrank_to_offset_factor;
   delete recvfrom_rank_to_msgcount_and_destined_labels;
   delete sendto_rank_to_msgcount_and_destined_labels;
@@ -531,23 +542,53 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
   delete [] local_vertex_displas;
   delete [] local_vertex_counts;
   delete label_to_vertex;
+}
 
-#ifdef ALL_DEBUG
-  /* Allreduce string test */
-  debug_str = "[hello";
+void parallel_ops::test_string_allreduce() {/* Allreduce string test */
+  std::__cxx11::string debug_str = "[hello";
   if (world_proc_rank == 0){
     debug_str = debug_str.append("wonderful");
   }
-  debug_str.append(std::to_string(world_proc_rank)).append("]");
+  debug_str.append(std::__cxx11::to_string(world_proc_rank)).append("]");
   debug_str = mpi_gather_string(debug_str);
   if (world_proc_rank == 0){
-    std::cout<<std::endl<<std::string(debug_str)<<std::endl;
+    std::cout << std::endl << string(debug_str) << std::endl;
   }
-#endif
+}
 
-#ifndef NDEBUG
+void parallel_ops::test_isend_irecv() {/* test ISend/IRecv */
+  int *buff = new int[2]();
+  buff[0] = world_proc_rank;
+  int recvfrom_rank = world_proc_rank - 1;
+  if (recvfrom_rank < 0){
+    recvfrom_rank = world_procs_count - 1;
+  }
 
-#endif
+  MPI_Request *requests = new MPI_Request[2]();
+  MPI_Irecv(&buff[1], 1, MPI_INT, recvfrom_rank, 99, MPI_COMM_WORLD, &requests[1]);
+
+  int sendto_rank = world_proc_rank + 1;
+  if (sendto_rank == world_procs_count) {
+    sendto_rank = 0;
+  }
+
+  MPI_Isend(&buff[0], 1, MPI_INT, sendto_rank, 99, MPI_COMM_WORLD, &requests[0]);
+
+  MPI_Status *status = new MPI_Status[2]();
+  MPI_Waitall(2, requests, status);
+
+  std::__cxx11::string debug_str = (world_proc_rank == 0) ? "DEBUG: find_nbrs: 10: ISend/Irecv [ \n" : "";
+  debug_str.append("  r").append(std::__cxx11::to_string(world_proc_rank)).append("[ ");
+  debug_str.append(std::__cxx11::to_string(buff[0])).append(" ").append(std::__cxx11::to_string(buff[1]));
+  debug_str.append(" ]\n");
+  debug_str = mpi_gather_string(debug_str);
+  if (world_proc_rank == 0){
+    std::cout << std::endl << string(debug_str).append("]") << std::endl;
+  }
+
+  delete [] status;
+  delete [] requests;
+  delete [] buff;
 }
 
 void parallel_ops::print_timing(

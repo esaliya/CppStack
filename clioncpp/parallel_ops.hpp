@@ -13,6 +13,7 @@
 
 #include <boost/shared_ptr.hpp>
 #include <chrono>
+#include <mpi.h>
 #include "vertex.hpp"
 
 class parallel_ops{
@@ -36,8 +37,11 @@ private:
 
   int world_proc_rank;
   int world_procs_count;
+
   // Maximum message size sent by a vertex. To be set later correctly.
   int max_msg_size = 500;
+  int recv_request_offset;
+  MPI_Request *send_recv_requests = nullptr;
 
   std::map<int, std::shared_ptr<short>> *recvfrom_rank_to_recv_buffer = nullptr;
   std::map<int, std::shared_ptr<short>> *sendto_rank_to_send_buffer = nullptr;
@@ -52,6 +56,10 @@ private:
 
   void print_timing(const std::chrono::time_point<std::chrono::high_resolution_clock> &start_ms,
                     const std::chrono::time_point<std::chrono::high_resolution_clock> &end_ms, const std::string &msg) const;
+
+  void test_isend_irecv();
+
+  void test_string_allreduce();
 };
 
 #endif //CLIONCPP_PARALLEL_OPS_H

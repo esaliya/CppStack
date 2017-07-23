@@ -201,15 +201,24 @@ void init_comp(std::vector<std::shared_ptr<vertex>> *vertices) {
 }
 
 bool run_graph_comp(int loop_id, std::vector<std::shared_ptr<vertex>> *vertices) {
+  std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
+  std::time_t start_time = std::chrono::system_clock::to_time_t(start);
+  std::string print_str = "\nINFO: Graph computation started on ";
+  print_str.append(std::ctime(&start_time));
+  if (p_ops->get_world_proc_rank() == 0){
+    std::cout<<print_str;
+  }
+
+
   // TODO - going with the skeleton code
   init_loop(vertices);
-  ticks_t start_time = std::chrono::high_resolution_clock::now();
+  ticks_t start_ticks = std::chrono::high_resolution_clock::now();
 
   int iterations_per_parallel_instance = 1;
   for (int iter = 0; iter < iterations_per_parallel_instance; ++iter){
     int final_iter = iter+(parallel_instance_id*iterations_per_parallel_instance);
     int thread_id = 0;
-    run_super_steps(vertices, thread_id, final_iter, start_time);
+    run_super_steps(vertices, thread_id, final_iter, start_ticks);
   }
   return false;
 }

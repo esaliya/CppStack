@@ -247,6 +247,7 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
     for (const auto &kv : (*outnbr_label_to_world_rank)){
       int rank = (*label_to_world_rank)[kv.first];
       (*outnbr_label_to_world_rank)[kv.first] = rank;
+      (*v->outrank_to_send_buffer)[rank] = std::make_shared<vertex_buffer>();
     }
   }
   end_ms = std::chrono::high_resolution_clock::now();
@@ -501,7 +502,7 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
       if(outrank_to_offset_factor->find(outrank) == outrank_to_offset_factor->end()){
         (*outrank_to_offset_factor)[outrank] = 0;
       } else {
-        ++(*outrank_to_offset_factor)[outrank];
+        ++((*outrank_to_offset_factor)[outrank]);
       }
       std::shared_ptr<vertex_buffer> vertex_send_buffer = (*vertex->outrank_to_send_buffer)[outrank];
       vertex_send_buffer->set_offset_factor((*outrank_to_offset_factor)[outrank]);

@@ -28,6 +28,10 @@ public:
     this->buffer = buffer;
   }
 
+  std::shared_ptr<short> get_buffer(){
+    return buffer;
+  }
+
 private:
   int offset_factor;
 

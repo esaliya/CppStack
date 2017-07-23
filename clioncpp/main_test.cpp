@@ -13,6 +13,11 @@
 #include <set>
 #include "test_map_class.hpp"
 
+void shared_ptr_creation_test(){
+  std::shared_ptr<int> shared_int_ptr = std::make_shared<int>();
+  (*shared_int_ptr) = 10;
+}
+
 void shared_ptr_array_copy(){
   int size = 10;
   std::shared_ptr<short> b = std::shared_ptr<short>(new short[size](), std::default_delete<short[]>());
@@ -301,7 +306,8 @@ void test(){
 }
 
 int main() {
-  shared_ptr_array_copy();
+  shared_ptr_creation_test();
+//  shared_ptr_array_copy();
 //  map_increment();
 //  shared_ptr_to_array();
 //  int_to_short_test();

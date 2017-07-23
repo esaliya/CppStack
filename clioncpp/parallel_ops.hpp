@@ -18,8 +18,8 @@
 
 class parallel_ops{
 public:
-  int parallel_instance_id = 0;
-  int parallel_instance_count = 1;
+  // to store msg count and msg size -- note msg count is stored as two shorts
+  const int BUFFER_OFFSET = 3;
   // Maximum message size sent by a vertex. To be set later correctly.
   int max_msg_size = 500;
   int thread_count = 1;
@@ -41,8 +41,6 @@ public:
   static parallel_ops * initialize(int *argc, char ***argv);
 
 private:
-  // to store msg count and msg size -- note msg count is stored as two shorts
-  const int BUFFER_OFFSET = 3;
   const int MSG_COUNT_OFFSET = 0;
   const int MSG_SIZE_OFFSET = 2;
 

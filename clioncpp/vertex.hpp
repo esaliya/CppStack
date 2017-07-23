@@ -11,6 +11,7 @@
 #include <random>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
+#include <iostream>
 #include "recv_vertex_buffer.hpp"
 #include "message.hpp"
 #include "galois_field.hpp"
@@ -72,17 +73,45 @@ public:
   double weight;
   unsigned int uniq_rand_seed;
 
-  void compute(int super_step, int iter, int* completion_vars, std::map<int, int> random_assignments){
+  void compute(int super_step, int iter, std::shared_ptr<int> completion_vars, std::shared_ptr<std::map<int, int>> random_assignments){
     // TODO - complete compute()
+
+    // TODO - dummy comp - list recvd messages
+    if (super_step == 0){
+      std::shared_ptr<short> data = std::shared_ptr<short>(new short[1](), std::default_delete<short[]>());
+      data.get()[0] = (short) label;
+      msg->set_data_and_msg_size(data, 1);
+    } else if (super_step > 0){
+      std::string str = "v";
+      str.append(std::to_string(label)).append(" recvd [ ");
+      for (const std::shared_ptr<message> msg : (*recvd_msgs)){
+        str.append(std::to_string(msg->get(0))).append(" ");
+      }
+      str.append("] ss=").append(std::to_string(super_step)).append("\n");
+      std::cout<<str;
+    }
   }
 
   int prepare_send(int super_step, int shift){
     // TODO - complete prepare_send()
-    return -27;
+
+    // TODO - for now let's send the vertex's label
+    for (const auto &kv : (*outrank_to_send_buffer)){
+      std::shared_ptr<vertex_buffer> b = kv.second;
+      int offset = shift + b->get_offset_factor() * msg->get_msg_size();
+      msg->copy(b->get_buffer(), offset);
+    }
+    return msg->get_msg_size();
   }
 
   void process_recvd(int super_step, int shift){
     // TODO - complete process_recvd()
+    for (int i = 0; i < recv_buffers->size(); ++i){
+      std::shared_ptr<recv_vertex_buffer> b = (*recv_buffers)[i];
+      std::shared_ptr<message> recvd_msg = (*recvd_msgs)[i];
+      int recvd_msg_size = b->get_msg_size();
+      recvd_msg->load(b->get_buffer(), shift+b->get_offset_factor()*recvd_msg_size, recvd_msg_size);
+    }
   }
 
   void init(int k , int r, std::shared_ptr<galois_field> gf){

@@ -13,6 +13,21 @@
 #include <set>
 #include "test_map_class.hpp"
 
+void time_test(){
+  std::chrono::time_point<std::chrono::high_resolution_clock > start_prog = std::chrono::system_clock::now();
+  std::time_t start_prog_time = std::chrono::system_clock::to_time_t(start_prog);
+  std::string print_str = "\nINFO: Graph computation started on ";
+  print_str.append(std::ctime(&start_prog_time));
+  std::cout<<print_str;
+}
+
+void math_tests(){
+  double epsilon = 0.1;
+  double prob_success = 0.2;
+  int iter = (int) round(log(epsilon) / log(1 - prob_success));
+  std::cout<<iter<<std::endl;
+}
+
 void shared_ptr_creation_test(){
   std::shared_ptr<int> shared_int_ptr = std::make_shared<int>();
   (*shared_int_ptr) = 10;
@@ -306,7 +321,9 @@ void test(){
 }
 
 int main() {
-  shared_ptr_creation_test();
+  time_test();
+//  math_tests();
+//  shared_ptr_creation_test();
 //  shared_ptr_array_copy();
 //  map_increment();
 //  shared_ptr_to_array();

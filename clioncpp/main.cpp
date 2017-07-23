@@ -26,6 +26,8 @@ void send_msgs(std::vector<std::shared_ptr<vertex>> *vertices, int super_step);
 void finalize_iteration(std::vector<std::shared_ptr<vertex>> *vertices, int thread_id);
 void finalize_iterations(std::vector<std::shared_ptr<vertex>> *vertices);
 
+void pretty_print_config(std::string &str);
+
 int vertex_count;
 int k;
 int delta;
@@ -41,6 +43,8 @@ int max_msg_size = 500;
 int parallel_instance_id = 0;
 int parallel_instance_count = 1;
 
+bool is_rank0 = false;
+
 parallel_ops *p_ops;
 
 int main(int argc, char **argv) {
@@ -51,6 +55,8 @@ int main(int argc, char **argv) {
     p_ops->teardown_parallelism();
     return ret;
   }
+
+  is_rank0 = (p_ops->get_world_proc_rank() == 0);
 
   std::vector<std::shared_ptr<vertex>> *vertices = nullptr;
   p_ops->set_parallel_decomposition(input_file.c_str(), vertex_count, vertices);
@@ -187,12 +193,64 @@ int parse_args(int argc, char **argv) {
 }
 
 void run_program(std::vector<std::shared_ptr<vertex>> *vertices) {
-  // TODO - going with the skeleton code
+  ticks_t start_prog = std::chrono::system_clock::now();
+  std::time_t start_prog_time = std::chrono::system_clock::to_time_t(start_prog);
+  std::string print_str = "\nINFO: Graph computation started on ";
+  print_str.append(std::ctime(&start_prog_time));
+  pretty_print_config(print_str);
+  if (is_rank0){
+    std::cout<<print_str;
+  }
+
+  // get number of iterations for a target error bound (epsilon)
+  double prob_success = 0.2;
+  int iter = (int) round(log(epsilon) / log(1 - prob_success));
+
+  print_str = "INFO: ";
+  print_str.append(std::to_string(iter)).append(" assignments will be evaluated for epsilon ")
+      .append(std::to_string(epsilon)).append("\n");
+  if (is_rank0){
+    std::cout<<print_str;
+  }
+
+  ticks_t start_loops = std::chrono::high_resolution_clock::now();
+  bool found_path = false;
   init_comp(vertices);
-  int iter = 1; // todo - actual iter finding
 
   for(int i = 0; i < iter; ++i){
-    bool ret = run_graph_comp(i, vertices);
+    print_str = "  INFO: Start of loop ";
+    print_str.append(std::to_string(i)).append("\n");
+    if (is_rank0) std::cout<<print_str;
+
+    ticks_t start_loop = std::chrono::high_resolution_clock::now();
+    found_path = run_graph_comp(i, vertices);
+    if (found_path){
+      break;
+    }
+    ticks_t end_loop = std::chrono::high_resolution_clock::now();
+    print_str = "  INFO: End of loop ";
+    print_str.append(std::to_string(i)).append(" duration (ms) ").
+        append(std::to_string((ms_t(end_loop - start_loop)).count())).append("\n");
+    if(is_rank0) std::cout<<print_str;
+  }
+
+  ticks_t end_loops = std::chrono::high_resolution_clock::now();
+  print_str = "INFO: Graph ";
+  print_str.append(found_path ? "contains " : "does not contain ").append("a ");
+  print_str.append(std::to_string(k)).append("-path");
+  if (is_rank0) std::cout<<print_str<<std::endl;
+
+  print_str = "INFO: Loops total time (ms)";
+  print_str.append(std::to_string((ms_t(end_loops - start_loops)).count())).append("\n");
+
+  ticks_t end_prog = std::chrono::high_resolution_clock::now();
+  std::time_t end_prog_time = std::chrono::system_clock::to_time_t(end_prog);
+
+  print_str.append("INFO: Graph computation ended on ");
+  print_str.append(std::ctime(&start_prog_time));
+
+  if(is_rank0){
+    std::cout<<print_str;
   }
 }
 
@@ -201,15 +259,6 @@ void init_comp(std::vector<std::shared_ptr<vertex>> *vertices) {
 }
 
 bool run_graph_comp(int loop_id, std::vector<std::shared_ptr<vertex>> *vertices) {
-  std::chrono::time_point<std::chrono::system_clock> start = std::chrono::system_clock::now();
-  std::time_t start_time = std::chrono::system_clock::to_time_t(start);
-  std::string print_str = "\nINFO: Graph computation started on ";
-  print_str.append(std::ctime(&start_time));
-  if (p_ops->get_world_proc_rank() == 0){
-    std::cout<<print_str;
-  }
-
-
   // TODO - going with the skeleton code
   init_loop(vertices);
   ticks_t start_ticks = std::chrono::high_resolution_clock::now();
@@ -277,5 +326,14 @@ void finalize_iterations(std::vector<std::shared_ptr<vertex>> *vertices) {
 
 }
 
+void pretty_print_config(std::string &str){
+  std::string params [] = {"Input File",
+                           "Global Vertex Count",
+                           "K",
+                           "Epsilon",
+                           "Delta",
+                           "Alpha Max",
+                           "Parallel Pattern"};
+}
 
 

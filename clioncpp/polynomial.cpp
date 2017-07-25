@@ -10,6 +10,24 @@
 const std::shared_ptr<polynomial> polynomial::X(create_from_long(2L));
 const std::shared_ptr<polynomial> polynomial::ONE(create_from_long(1L));
 
+std::shared_ptr<polynomial> polynomial::create_irreducible(int degree) {
+  while (true){
+    std::shared_ptr<polynomial> p = create_random(degree);
+    if (!p->is_reducible()){
+      return p;
+    }
+  }
+}
+
+std::shared_ptr<polynomial> polynomial::create_irreducible(int degree, long seed) {
+  while (true){
+    std::shared_ptr<polynomial> p = create_random(degree, seed);
+    if (!p->is_reducible()){
+      return p;
+    }
+  }
+}
+
 // TODO - Check with Jose
 long polynomial::to_long() {
   long b = 0L;
@@ -62,24 +80,6 @@ std::shared_ptr<polynomial> polynomial::create_random(int degree, long long seed
   std::generate(std::begin(bytes), std::end(bytes), gen);
 
   return create_from_bytes(bytes, degree);
-}
-
-std::shared_ptr<polynomial> polynomial::create_irreducible(int degree) {
-  while (true){
-    std::shared_ptr<polynomial> p = create_random(degree);
-    if (!p->is_reducible()){
-      return p;
-    }
-  }
-}
-
-std::shared_ptr<polynomial> polynomial::create_irreducible(int degree, long seed) {
-  while (true){
-    std::shared_ptr<polynomial> p = create_random(degree, seed);
-    if (!p->is_reducible()){
-      return p;
-    }
-  }
 }
 
 std::shared_ptr<std::set<long, rev_comp_t>> polynomial::create_degrees_collection() {

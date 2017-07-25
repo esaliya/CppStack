@@ -173,6 +173,7 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
   int *local_vertex_counts = new int[world_procs_count];
   MPI_Allgather(&local_vertex_count, 1, MPI_INT, local_vertex_counts, 1, MPI_INT, MPI_COMM_WORLD);
 
+  my_vertex_count = local_vertex_count;
 #ifdef LONG_DEBUG
   /* Check local vertex counts */
   debug_str = (world_proc_rank==0) ? "DEBUG: find_nbrs: 2: vcount [ " : " ";
@@ -189,6 +190,8 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
   for (int i = 1; i < world_procs_count; ++i){
     local_vertex_displas[i] = local_vertex_displas[i-1]+local_vertex_counts[i-1];
   }
+
+  my_vertex_displas = local_vertex_displas[world_proc_rank];
 
 #ifdef LONG_DEBUG
   /* Check local vertex displas */
@@ -230,11 +233,12 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
   /* Just keep in mind this map and the global_vertex_labels can be really large
    * Think of optimizations if this becomes a bottleneck */
   start_ms = std::chrono::high_resolution_clock::now();
+  vertex_label_to_world_rank = std::make_shared<std::map<int,int>>();
   std::map<int,int> *label_to_world_rank = new std::map<int,int>();
   for (int rank = 0; rank < world_procs_count; ++rank){
     for (int i = 0; i < local_vertex_counts[rank]; ++i){
       offset = local_vertex_displas[rank];
-      (*label_to_world_rank)[global_vertex_labels[i + offset]] = rank;
+      (*vertex_label_to_world_rank)[global_vertex_labels[i + offset]] = rank;
     }
   }
   end_ms = std::chrono::high_resolution_clock::now();
@@ -245,7 +249,7 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
   for (const std::shared_ptr<vertex> &v : (*vertices)){
     std::map<int, int> *outnbr_label_to_world_rank = v->outnbr_lbl_to_world_rank;
     for (const auto &kv : (*outnbr_label_to_world_rank)){
-      int rank = (*label_to_world_rank)[kv.first];
+      int rank = (*vertex_label_to_world_rank)[kv.first];
       (*outnbr_label_to_world_rank)[kv.first] = rank;
       (*v->outrank_to_send_buffer)[rank] = std::make_shared<vertex_buffer>();
     }
@@ -552,7 +556,6 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
 
   delete outrank_to_offset_factor;
   delete sendto_rank_to_msgcount_and_destined_labels;
-  delete label_to_world_rank;
   delete [] global_vertex_labels;
   delete [] local_vertex_displas;
   delete [] local_vertex_counts;

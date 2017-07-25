@@ -8,6 +8,7 @@
 #include "parallel_ops.hpp"
 #include "constants.h"
 #include "utils.hpp"
+#include "polynomial.hpp"
 
 typedef std::chrono::duration<double, std::milli> ms_t;
 typedef std::chrono::time_point<std::chrono::high_resolution_clock> ticks_t;
@@ -27,9 +28,11 @@ void finalize_iteration(std::vector<std::shared_ptr<vertex>> *vertices, int thre
 void finalize_iterations(std::vector<std::shared_ptr<vertex>> *vertices);
 
 void pretty_print_config(std::string &str);
+int log2(int x);
 
-int vertex_count;
+int global_vertex_count;
 int k;
+int r; // not used in k-path problem
 int delta;
 double alpha;
 double epsilon;
@@ -65,7 +68,7 @@ int main(int argc, char **argv) {
   is_rank0 = (p_ops->get_world_proc_rank() == 0);
 
   std::vector<std::shared_ptr<vertex>> *vertices = nullptr;
-  p_ops->set_parallel_decomposition(input_file.c_str(), vertex_count, vertices);
+  p_ops->set_parallel_decomposition(input_file.c_str(), global_vertex_count, vertices);
   run_program(vertices);
   delete vertices;
   p_ops->teardown_parallelism();
@@ -102,7 +105,7 @@ int parse_args(int argc, char **argv) {
   }
 
   if (vm.count(CMD_OPTION_SHORT_VC)){
-    vertex_count = vm[CMD_OPTION_SHORT_VC].as<int>();
+    global_vertex_count = vm[CMD_OPTION_SHORT_VC].as<int>();
   } else {
     if (is_rank0)
       std::cout<<"ERROR: Vertex count not specified"<<std::endl;
@@ -286,6 +289,44 @@ void init_loop(std::vector<std::shared_ptr<vertex>> *vertices) {
   long long per_loop_random_seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
   MPI_Bcast(&per_loop_random_seed, 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
 
+  int degree = 3+log2(k);
+  gf = galois_field::getInstance(1<<degree, (int)polynomial::create_irreducible(degree, per_loop_random_seed)->to_long());
+
+  std::default_random_engine re_1(per_loop_random_seed);
+  std::uniform_int_distribution<long> unid_1;
+  auto gen_1 = std::bind(unid_1, re_1);
+
+  int displas = p_ops->my_vertex_displas;
+  int count = p_ops->my_vertex_count;
+  for (int i = 0; i < global_vertex_count; ++i){
+    // this step ensures every proc invokes the random engine
+    // the same number of times, so when each of them take different
+    // parts from this generated sequence they (the values) will still
+    // be different and random.
+    long uniq_rand_val = gen_1();
+    if (i >= displas && i < displas+count){
+      (*vertices)[i-displas]->uniq_rand_seed = uniq_rand_val;
+    }
+  }
+
+  std::default_random_engine re_2(per_loop_random_seed);
+  // Note, in C++ the distribution is in closed interval [a,b]
+  // whereas in Java it's [a,b), so the random.nextInt(twoRaisedToK)
+  // equivalent in C++ is [0,two_raised_to_k - 1]
+  std::uniform_int_distribution<int> unid_2(0,two_raised_to_k-1);
+  auto gen_2 = std::bind(unid_2, re_2);
+  for (const auto &kv : (*p_ops->vertex_label_to_world_rank)){
+    int label = kv.first;
+    (*random_assignments)[label] = gen_2();
+  }
+
+  for (int i = 0; i < k-1; ++i){
+    completion_vars.get()[i] = gen_2();
+  }
+
+  for (const std::shared_ptr<vertex> &v : (*vertices)){
+    v->init(k, r, gf);
+  }
 }
 
 void run_super_steps(std::vector<std::shared_ptr<vertex>> *vertices, int iter, int thread_id, ticks_t &start_time) {
@@ -346,6 +387,16 @@ void pretty_print_config(std::string &str){
                            "Delta",
                            "Alpha Max",
                            "Parallel Pattern"};
+}
+
+int log2(int x) {
+  int result = 0;
+  x >>= 1;
+  while (x > 0){
+    result++;
+    x >>= 1;
+  }
+  return result;
 }
 
 

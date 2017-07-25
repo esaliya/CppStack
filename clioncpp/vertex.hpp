@@ -71,7 +71,7 @@ public:
 
   int label;
   double weight;
-  unsigned int uniq_rand_seed;
+  long uniq_rand_seed;
 
   void compute(int super_step, int iter, std::shared_ptr<int> completion_vars, std::shared_ptr<std::map<int, int>> random_assignments){
     // TODO - complete compute()

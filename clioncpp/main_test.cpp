@@ -79,6 +79,40 @@ void test_map_construct(){
 
 }
 
+void long_rand_test(){
+  unsigned int seed = (unsigned int) std::chrono::high_resolution_clock::now().time_since_epoch().count();
+  std::default_random_engine re1(seed);
+  std::default_random_engine re2(seed);
+  std::uniform_int_distribution<long> unid1;
+  std::uniform_int_distribution<int> unid2;
+  auto gen1 = std::bind(unid1, re1);
+  auto gen2 = std::bind(unid2, re2);
+
+  int x = 5;
+  for (int i = 0; i < x; ++i) {
+    long v1 = gen1();
+    long v2 = gen2();
+    std::cout << v1 << "  " << v2 << " " << v1 - v2 << std::endl;
+  }
+
+  std::cout<<"=========\n";
+
+  std::default_random_engine re3(seed);
+  std::uniform_int_distribution<int> unid3;
+  auto gen3 = std::bind(unid1, re3);
+  for (int i = 0; i < x; ++i) {
+    gen3();
+  }
+
+  auto gen3_1 = std::bind(unid3, re3);
+  for (int i = 0; i < x; ++i) {
+    long v1 = gen1();
+    long v3_1 = gen3_1();
+    std::cout << v1 << "  " << v3_1 << " " << v1 - v3_1 << std::endl;
+  }
+}
+
+
 
 void rand_byte_test(){
   std::uniform_int_distribution<int> unif(-128,127);
@@ -413,7 +447,8 @@ void test(){
 }
 
 int main() {
-  test_set_remove();
+  long_rand_test();
+//  test_set_remove();
 //  test_bitset();
 //  test_map_construct();
 //  rand_byte_test();

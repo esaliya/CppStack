@@ -4,10 +4,11 @@
 
 #include <map>
 #include <iostream>
+#include <memory>
 #include "galois_field.hpp"
 
-std::map<int, galois_field*> galois_field::instances
-    = std::map<int, galois_field*>();
+std::map<int, std::shared_ptr<galois_field>> galois_field::instances
+    = std::map<int, std::shared_ptr<galois_field>>();
 
 galois_field::galois_field(int field_size, int primitive_polynomial)
     : field_size(field_size),
@@ -51,9 +52,6 @@ galois_field::galois_field(int field_size, int primitive_polynomial)
 }
 
 galois_field::~galois_field() {
-  for (std::map<int,galois_field*>::iterator it=instances.begin(); it!=instances.end(); ++it){
-    delete it->second;
-  }
 
 }
 
@@ -69,15 +67,20 @@ int galois_field::multiply(int x, int y) {
   return mul_tbl[x*field_size+y];
 }
 
-galois_field *galois_field::getInstance(int field_size, int primitive_polynomial) {
+std::shared_ptr<galois_field> galois_field::getInstance(int field_size, int primitive_polynomial) {
   int key = ((field_size << 16) & 0xFFFF0000) + (primitive_polynomial & 0x0000FFFF);
   // The original code was thread safe here but we don't need that
-  galois_field* gf = new galois_field(field_size, primitive_polynomial);
-  instances[key] = gf;
+  std::shared_ptr<galois_field> gf;
+  if (instances.find(key) == instances.end()){
+    gf  = std::make_shared<galois_field>(field_size, primitive_polynomial);
+    instances[key] = gf;
+  } else {
+    gf = instances[key];
+  }
   return gf;
 }
 
-galois_field *galois_field::getInstance() {
+std::shared_ptr<galois_field> galois_field::getInstance() {
   return getInstance(DEFAULT_FIELD_SIZE, DEFAULT_PRIMITIVE_POLYNOMIAL);
 }
 

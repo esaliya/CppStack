@@ -24,8 +24,8 @@ public:
 
   int add(int x, int y);
   int multiply(int x, int y);
-  static galois_field *getInstance(int field_size, int primitive_polynomial);
-  static galois_field *getInstance();
+  static std::shared_ptr<galois_field> getInstance(int field_size, int primitive_polynomial);
+  static std::shared_ptr<galois_field> getInstance();
 
 private:
   std::vector<int> log_tbl;
@@ -40,7 +40,7 @@ private:
   // primitive polynomial 1 + X^2 + X^3 + X^4 + X^8
   static const int DEFAULT_PRIMITIVE_POLYNOMIAL = 285;
 
-  static std::map<int, galois_field*> instances;
+  static std::map<int, std::shared_ptr<galois_field>> instances;
 
 };
 

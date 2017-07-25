@@ -25,8 +25,12 @@ public:
   int thread_count = 1;
   int node_count = 1;
 
+  int my_vertex_displas = 0;
+  int my_vertex_count = 0;
+
   std::shared_ptr<int> thread_id_to_vertex_offset = nullptr;
   std::shared_ptr<int> thread_id_to_vertex_count = nullptr;
+  std::shared_ptr<std::map<int,int>> vertex_label_to_world_rank = nullptr;
 
   int get_world_proc_rank() const;
   int get_world_procs_count() const;

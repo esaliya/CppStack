@@ -36,6 +36,12 @@ double epsilon;
 std::string input_file;
 std::string partition_file;
 
+int two_raised_to_k;
+std::shared_ptr<galois_field> gf = nullptr;
+int max_iterations;
+std::shared_ptr<std::map<int,int>> random_assignments = nullptr;
+std::shared_ptr<int> completion_vars = nullptr;
+
 // default values;
 int node_count = 1;
 int thread_count = 1;
@@ -255,7 +261,10 @@ void run_program(std::vector<std::shared_ptr<vertex>> *vertices) {
 }
 
 void init_comp(std::vector<std::shared_ptr<vertex>> *vertices) {
-
+  two_raised_to_k = 1 << k;
+  max_iterations = k - 1;
+  random_assignments = std::make_shared<std::map<int,int>>();
+  completion_vars = std::shared_ptr<int>(new int[k-1](), std::default_delete<int[]>());
 }
 
 bool run_graph_comp(int loop_id, std::vector<std::shared_ptr<vertex>> *vertices) {
@@ -274,6 +283,9 @@ bool run_graph_comp(int loop_id, std::vector<std::shared_ptr<vertex>> *vertices)
 
 void init_loop(std::vector<std::shared_ptr<vertex>> *vertices) {
   // TODO - initi_loop
+  long long per_loop_random_seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+  MPI_Bcast(&per_loop_random_seed, 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
+
 }
 
 void run_super_steps(std::vector<std::shared_ptr<vertex>> *vertices, int iter, int thread_id, ticks_t &start_time) {

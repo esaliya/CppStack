@@ -33,7 +33,7 @@ public:
    * Returns the value of the bit at index of the byte. The right most bit is
    * at index 0.
    */
-  static bool get_bit(unsigned char b, int index) {
+  static bool get_bit(char b, int index) {
     return (((b >> index) & 1) == 1);
   }
 
@@ -41,13 +41,13 @@ public:
    * Returns the value of the bit at index of the byte. The right most bit is
    * at index 0 of the last byte in the array.
    */
-  static bool get_bit(std::vector<unsigned char> bytes, int index) {
+  static bool get_bit(std::vector<char> bytes, int index) {
     // byte array index
     int aidx = (int)((bytes.size() - 1) - (index / 8));
     // bit index
     int bidx = index % 8;
     // byte
-    unsigned char b = bytes[aidx];
+    char b = bytes[aidx];
     // bit
     return get_bit(b, bidx);
   }

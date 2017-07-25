@@ -11,7 +11,89 @@
 
 #include <boost/foreach.hpp>
 #include <set>
+#include <bitset>
 #include "test_map_class.hpp"
+#include "map_constructor.hpp"
+
+void test_set_remove(){
+  std::set<long> s;
+  s.insert(10);
+  s.insert(10);
+  s.insert(23);
+  s.insert(11);
+  s.insert(10);
+  s.insert(23);
+  s.insert(33);
+
+  std::set<long>::iterator it = s.find(23);
+  if (it != s.end()){
+    s.erase(it);
+  }
+
+  for (const long &v : s){
+    std::cout<<v<<std::endl;
+  }
+}
+
+int bit_count(long v){
+  std::bitset<sizeof(long)*8> bs((unsigned long)v);
+  int count = (int) bs.count();
+  int total_length = sizeof(long)*8;
+  return bs[total_length-1] == 1 ? (total_length - count) : count;
+}
+
+void test_bitset(){
+  long x = 65529;
+  std::bitset<sizeof(long)> bs((unsigned long long int) x);
+  std::cout<<bs.to_string()<<" "<<bs.count()<<"  "<<bs[0]<<"  "<<bs[1]<<std::endl;
+  std::cout<<"size of long "<< sizeof(long);
+
+  short y = -7L;
+  unsigned short u_y = (unsigned short)y;
+  std::cout<<std::endl<<y<<" "<<u_y<<std::endl;
+
+  std::cout<<bit_count(-7L)<<std::endl;
+  std::cout<<bit_count(7L)<<std::endl;
+}
+
+void test_map_construct(){
+  std::shared_ptr<map_constructor> mc = std::make_shared<map_constructor>();
+  std::shared_ptr<std::set<int>> mc_set = mc->get_set();
+  mc_set->insert(10);
+  mc_set->insert(37);
+  mc_set->insert(4);
+
+  std::shared_ptr<map_constructor> copy_mc = std::make_shared<map_constructor>(mc_set);
+  std::shared_ptr<std::set<int>> copy_mc_set = copy_mc->get_set();
+  copy_mc_set->insert(90);
+
+  for(const int &mc_val : (*mc_set)){
+    std::cout<<mc_val<<" ";
+  }
+  std::cout<<std::endl;
+
+  for(const int &copy_mc_val : (*copy_mc_set)){
+    std::cout<<copy_mc_val<<" ";
+  }
+  std::cout<<std::endl;
+
+}
+
+
+void rand_byte_test(){
+  std::uniform_int_distribution<int> unif(-128,127);
+  std::default_random_engine re((unsigned int) std::chrono::high_resolution_clock::now().time_since_epoch().count());
+  std::vector<char> bytes(5);
+  auto gen = std::bind(unif, re);
+  std::generate(std::begin(bytes), std::end(bytes), gen);
+
+  for (const int &x : bytes){
+    std::cout<<(int)x<<std::endl;
+  }
+
+  char c = 127;
+  std::cout<<(int)c;
+}
 
 void time_test(){
   std::chrono::time_point<std::chrono::high_resolution_clock > start_prog = std::chrono::system_clock::now();
@@ -247,6 +329,16 @@ void test_string(){
 
 }
 
+void test_rand_time_seed(){
+  std::chrono::time_point<std::chrono::high_resolution_clock> start = std::chrono::high_resolution_clock::now();
+  std::default_random_engine re((unsigned int) start.time_since_epoch().count());
+  std::uniform_real_distribution<double> unif;
+  auto bind = std::bind(unif, re);
+  std::cout<<bind()<<std::endl;
+  std::cout<<bind()<<std::endl;
+  std::cout<<bind()<<std::endl;
+}
+
 
 void test_rand(){
   std::uniform_real_distribution<double> unif;
@@ -321,7 +413,12 @@ void test(){
 }
 
 int main() {
-  time_test();
+  test_set_remove();
+//  test_bitset();
+//  test_map_construct();
+//  rand_byte_test();
+//  test_rand_time_seed();
+//  time_test();
 //  math_tests();
 //  shared_ptr_creation_test();
 //  shared_ptr_array_copy();

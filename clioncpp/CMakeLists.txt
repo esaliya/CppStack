@@ -21,6 +21,6 @@ if(Boost_FOUND)
     target_link_libraries(main ${Boost_LIBRARIES})
 endif()
 
-set(SOURCE_FILES main_test.cpp test_map_class.cpp test_map_class.hpp)
+set(SOURCE_FILES main_test.cpp test_map_class.cpp test_map_class.hpp map_constructor.cpp map_constructor.hpp)
 add_executable(main_test ${SOURCE_FILES})
 

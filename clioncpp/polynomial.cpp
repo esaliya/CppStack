@@ -5,6 +5,7 @@
 #include <random>
 #include <bitset>
 #include <map>
+#include <iostream>
 #include "polynomial.hpp"
 #include "polynomials.hpp"
 const std::shared_ptr<polynomial> polynomial::X(create_from_long(2L));
@@ -19,9 +20,9 @@ std::shared_ptr<polynomial> polynomial::create_irreducible(int degree) {
   }
 }
 
-std::shared_ptr<polynomial> polynomial::create_irreducible(int degree, long seed) {
+std::shared_ptr<polynomial> polynomial::create_irreducible(int degree, std::default_random_engine &re) {
   while (true){
-    std::shared_ptr<polynomial> p = create_random(degree, seed);
+    std::shared_ptr<polynomial> p = create_random(degree, re);
     if (!p->is_reducible()){
       return p;
     }
@@ -71,14 +72,20 @@ std::shared_ptr<polynomial> polynomial::create_random(int degree){
   return create_from_bytes(bytes, degree);
 }
 
-std::shared_ptr<polynomial> polynomial::create_random(int degree, long long seed) {
-  std::default_random_engine re(seed);
+std::shared_ptr<polynomial> polynomial::create_random(int degree, std::default_random_engine &re) {
+//  std::default_random_engine re(seed);
   std::uniform_int_distribution<int> unif(-128,127);
 
   std::vector<char> bytes((unsigned long) ((degree / 8) + 1));
   auto gen = std::bind(unif, re);
   std::generate(std::begin(bytes), std::end(bytes), gen);
 
+  // TODO - debug
+  bytes[0] = -8;
+  std::cout<<"TODO: DEBUG: Initial bytes"<<std::endl;
+  for (const int &b : bytes){
+    std::cout<<b<<" ";
+  }
   return create_from_bytes(bytes, degree);
 }
 
@@ -103,7 +110,7 @@ int polynomial::compare(long a, long b) {
 }
 
 polynomial::polynomial() {
-
+  degrees = create_degrees_collection();
 }
 
 polynomial::polynomial(std::shared_ptr<polynomial> poly)
@@ -136,12 +143,21 @@ std::shared_ptr<polynomial> polynomial::poly_xor(std::shared_ptr<polynomial> tha
   std::set<long, rev_comp_t> diff0(rev_comparator);
   std::set_difference(dgrs0.begin(), dgrs0.end(), (*that->degrees).begin(), (*that->degrees).end(),
                       std::inserter(diff0, diff0.begin()));
+  dgrs0 = diff0;
+
+  // TODO - debug
+  std::cout<<"dgrs0 after dgrs0-that.degrees: size: " << dgrs0.size() << "[ ";
+  for (const long &v : dgrs0){
+    std::cout<<v<<" ";
+  }
+  std::cout<<" ]"<<std::endl;
 
   // The copy constructor copies content of "*(that->degrees)"
   std::shared_ptr<std::set<long, rev_comp_t>> dgrs1 = std::make_shared<std::set<long, rev_comp_t>>(*(that->degrees));
   std::set<long, rev_comp_t> diff1(rev_comparator);
   std::set_difference((*dgrs1).begin(), (*dgrs1).end(), (*degrees).begin(), (*degrees).end(),
                       std::inserter(diff1, diff1.begin()));
+  *dgrs1 = diff1;
 
   (*dgrs1).insert(dgrs0.begin(), dgrs0.end());
 
@@ -150,25 +166,28 @@ std::shared_ptr<polynomial> polynomial::poly_xor(std::shared_ptr<polynomial> tha
 }
 
 std::shared_ptr<polynomial> polynomial::mod(std::shared_ptr<polynomial> that) {
+  // TODO - debug
+  std::cout<<"in mod \"this\" " << (*this);
   long da = get_degree();
   long db = that->get_degree();
   std::shared_ptr<polynomial> reg = std::shared_ptr<polynomial>(new polynomial(degrees));
   for (long i = (da - db); compare(i, 0) >= 0; i = i - 1){
     if (reg->has_degree(i+db)){
       std::shared_ptr<polynomial> shifted = that->shift_left(i);
+      // TODO - debug
+      std::cout<<"in mod \"shifted\" "<<(*shifted) << "  \"reg\" "<<(*reg);
       reg = reg->poly_xor(shifted);
+      // TODO - debug
+      std::cout<<"in mod \"reg after xor\" "<<(*reg);
     }
   }
   return reg;
 }
 
 std::shared_ptr<polynomial> polynomial::shift_left(long shift) {
-  std::shared_ptr<std::set<long, rev_comp_t >> dgrs = create_degrees_collection();
-  for (const long & degree : (*dgrs)){
-    long shifted = degree - shift;
-    if (compare(shifted, 0) < 0){
-      continue;
-    }
+  std::shared_ptr<std::set<long, rev_comp_t>> dgrs = create_degrees_collection();
+  for (const long &degree : (*degrees)){
+    long shifted = degree + shift;
     dgrs->insert(shifted);
   }
   return std::shared_ptr<polynomial>(new polynomial(dgrs));
@@ -203,10 +222,14 @@ std::shared_ptr<polynomial> polynomial::reduce_exponent(int p) {
 }
 
 std::shared_ptr<polynomial> polynomial::gcd(std::shared_ptr<polynomial> that) {
-  std::shared_ptr<polynomial> a = shared_from_this();
+  std::shared_ptr<polynomial> a = std::shared_ptr<polynomial>(new polynomial(shared_from_this()));
   while (!that->is_empty()) {
     std::shared_ptr<polynomial> t = std::shared_ptr<polynomial>(new polynomial(that));
+    // TODO - debug
+    std::cout<<"before mod \"that\" "<<(*that) << " \"  a\" " << (*a);
     that = a->mod(that);
+    // TODO - debug
+    std::cout<<"after mod \"that\" "<<(*that)<< " \"  a\" " << (*a);
     a = t;
   }
   return a;
@@ -233,6 +256,8 @@ long polynomial::get_degree() {
 }
 
 bool polynomial::is_empty() {
+  // TODO - debug
+  int x = degrees->size();
   return degrees->empty();
 }
 
@@ -248,16 +273,42 @@ bool polynomial::is_reducible() {
   return get_reducibility_ben_or();
 }
 
+/**
+	 * BenOr Reducibility Test
+	 *
+	 * Tests and Constructions of Irreducible Polynomials over Finite Fields
+	 * (1997) Shuhong Gao, Daniel Panario
+	 *
+	 * http://citeseer.ist.psu.edu/cache/papers/cs/27167/http:zSzzSzwww.math.clemson.eduzSzfacultyzSzGaozSzpaperszSzGP97a.pdf/gao97tests.pdf
+	 */
 bool polynomial::get_reducibility_ben_or() {
   long degree = get_degree();
   for (int i = 1; i <= (int) (degree / 2); i++) {
     std::shared_ptr<polynomial> b = reduce_exponent(i);
+
+    // TODO - debug
+    std::cout<<"reduce exponent b";
+    for (const long &v : (*b->degrees)){
+      std::cout<<v<<" ";
+    }
+    std::cout<<std::endl;
+
     std::shared_ptr<polynomial> g = gcd(b);
     if (g->compare(ONE) != 0) {
       return true;
     }
   }
   return false;
+}
+
+std::ostream &operator<<(std::ostream &out_strm, const polynomial &p) {
+  out_strm << "size: " << p.degrees->size() << " [ ";
+  for (const long &v : (*p.degrees)){
+     out_strm << v << " ";
+  }
+  out_strm << " ]\n";
+
+  return out_strm;
 }
 
 

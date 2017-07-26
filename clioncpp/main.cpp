@@ -56,8 +56,25 @@ bool is_rank0 = false;
 
 parallel_ops *p_ops;
 
-int main(int argc, char **argv) {
+/*
+void poly_test(){
+  std::shared_ptr<polynomial> p = std::make_shared<polynomial>();
+  p->degrees->insert(4);
+  p->degrees->insert(3);
+  std::cout<<*p<<std::endl;
 
+  std::shared_ptr<polynomial> q = std::make_shared<polynomial>();
+  q->degrees->insert(4);
+  q->degrees->insert(3);
+  std::cout<<*p<<std::endl;
+
+  std::shared_ptr<polynomial> p_xor_q = p->poly_xor(q);
+  std::cout<<*p_xor_q<<std::endl;
+
+}
+*/
+
+int main(int argc, char **argv) {
   p_ops = parallel_ops::initialize(&argc, &argv);
   int ret = parse_args(argc, argv);
   if (ret < 0){
@@ -285,16 +302,15 @@ bool run_graph_comp(int loop_id, std::vector<std::shared_ptr<vertex>> *vertices)
 }
 
 void init_loop(std::vector<std::shared_ptr<vertex>> *vertices) {
-  // TODO - initi_loop
   long long per_loop_random_seed = std::chrono::high_resolution_clock::now().time_since_epoch().count();
   MPI_Bcast(&per_loop_random_seed, 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
 
+  std::default_random_engine re(per_loop_random_seed);
   int degree = 3+log2(k);
-  gf = galois_field::getInstance(1<<degree, (int)polynomial::create_irreducible(degree, per_loop_random_seed)->to_long());
+  gf = galois_field::getInstance(1<<degree, (int)polynomial::create_irreducible(degree, re)->to_long());
 
-  std::default_random_engine re_1(per_loop_random_seed);
   std::uniform_int_distribution<long> unid_1;
-  auto gen_1 = std::bind(unid_1, re_1);
+  auto gen_1 = std::bind(unid_1, re);
 
   int displas = p_ops->my_vertex_displas;
   int count = p_ops->my_vertex_count;
@@ -309,12 +325,11 @@ void init_loop(std::vector<std::shared_ptr<vertex>> *vertices) {
     }
   }
 
-  std::default_random_engine re_2(per_loop_random_seed);
   // Note, in C++ the distribution is in closed interval [a,b]
   // whereas in Java it's [a,b), so the random.nextInt(twoRaisedToK)
   // equivalent in C++ is [0,two_raised_to_k - 1]
   std::uniform_int_distribution<int> unid_2(0,two_raised_to_k-1);
-  auto gen_2 = std::bind(unid_2, re_2);
+  auto gen_2 = std::bind(unid_2, re);
   for (const auto &kv : (*p_ops->vertex_label_to_world_rank)){
     int label = kv.first;
     (*random_assignments)[label] = gen_2();

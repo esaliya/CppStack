@@ -14,6 +14,25 @@
 #include <bitset>
 #include "test_map_class.hpp"
 #include "map_constructor.hpp"
+#include "polynomial.hpp"
+
+void pass_by_ref_2_internal_internal(int &z){
+  z = 30;
+}
+
+void pass_by_ref_test_2_internal(int &y){
+  y = 20;
+  pass_by_ref_2_internal_internal(y);
+}
+
+void pass_by_ref_test_2(){
+  int x = 10;
+  std::cout<<x<<std::endl;
+  pass_by_ref_test_2_internal(x);
+  std::cout<<x<<std::endl;
+
+}
+
 
 void test_set_remove(){
   std::set<long> s;
@@ -110,6 +129,30 @@ void long_rand_test(){
     long v3_1 = gen3_1();
     std::cout << v1 << "  " << v3_1 << " " << v1 - v3_1 << std::endl;
   }
+}
+
+void rand_pass_test(){
+  unsigned int seed = (unsigned int) std::chrono::high_resolution_clock::now().time_since_epoch().count();
+  std::default_random_engine re_1(seed);
+  std::uniform_int_distribution<long> unid_1;
+
+  auto gen_1 = std::bind(unid_1, re_1);
+  int x = 5;
+  for (int i = 0; i < x; ++i) {
+//    long v = unid_1(re_1);
+    long v = gen_1(re_1);
+    std::cout << v << std::endl;
+  }
+
+  std::default_random_engine re_2(seed);
+  auto gen_2 = std::bind(unid_1, re_2);
+  x = 5;
+  for (int i = 0; i < x; ++i) {
+//    long v = unid_1(re_2);
+    long v = gen_2();
+    std::cout << v << std::endl;
+  }
+
 }
 
 
@@ -280,12 +323,29 @@ void test_set_clear(){
   }
   myset2.insert(90);
 
+  std::cout<<"myset 1 size "<<myset.size()<<" [ ";
+  for (const int &s1v : myset){
+    std::cout<<s1v<<" ";
+  }
+  std::cout<<" ]"<<std::endl;
+
+  std::cout<<"myset 2 size "<<myset2.size()<<" [ ";
+  for (const int &s2v : myset2){
+    std::cout<<s2v<<" ";
+  }
+  std::cout<<" ]"<<std::endl;
+
 //  myset.erase(myset2.begin(), myset2.end());
 
-  std::set_difference(myset.begin(), myset.end(), myset2.begin(), myset2.end(), std::inserter(diff, diff.begin()));
-  for (std::set<int>::iterator it=diff.begin(); it!=diff.end(); ++it)
-    std::cout << ' ' << *it;
-  std::cout << '\n';
+  std::set_difference(myset.begin(), myset.end(),
+                      myset2.begin(), myset2.end(),
+                      std::inserter(diff, diff.begin()));
+
+  std::cout<<"diff (myset - myset2) size "<<diff.size()<<" [ ";
+  for (const int &dv : diff){
+    std::cout<<dv<<" ";
+  }
+  std::cout<<" ]"<<std::endl;
 
 }
 
@@ -447,7 +507,10 @@ void test(){
 }
 
 int main() {
-  long_rand_test();
+//  poly_test();
+//  pass_by_ref_test_2();
+//  rand_pass_test();
+//  long_rand_test();
 //  test_set_remove();
 //  test_bitset();
 //  test_map_construct();
@@ -465,7 +528,7 @@ int main() {
 //  assign_to_pointer_test2();
 //  assign_to_pointer_test();
 //  pass_by_ref_test();
-//  test_set_clear();
+  test_set_clear();
 //  test_object_creation_and_shared_ptr();
 //  test_shared_ptr_for_set();
 //  test_comparator();

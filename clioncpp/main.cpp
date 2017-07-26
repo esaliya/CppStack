@@ -12,6 +12,8 @@
 
 typedef std::chrono::duration<double, std::milli> ms_t;
 typedef std::chrono::time_point<std::chrono::high_resolution_clock> ticks_t;
+
+typedef std::chrono::high_resolution_clock hrc_t;
 namespace po = boost::program_options;
 
 int parse_args(int argc, char **argv);
@@ -233,7 +235,7 @@ void run_program(std::vector<std::shared_ptr<vertex>> *vertices) {
   int external_loops = (int) round(log(epsilon) / log(1 - prob_success));
 
   print_str = "  INFO: ";
-  print_str.append(std::to_string(external_loops)).append(" assignments will be evaluated for epsilon ")
+  print_str.append(std::to_string(external_loops)).append(" external loops will be evaluated for epsilon ")
       .append(std::to_string(epsilon)).append("\n");
   if (is_rank0){
     std::cout<<print_str;
@@ -247,7 +249,7 @@ void run_program(std::vector<std::shared_ptr<vertex>> *vertices) {
   external_loops = 1;
   for(int i = 0; i < external_loops; ++i){
     print_str = "  INFO: Start of external loop ";
-    print_str.append(std::to_string(i)).append("\n");
+    print_str.append(std::to_string(i+1)).append("\n");
     if (is_rank0) std::cout<<print_str;
 
     ticks_t start_loop = std::chrono::high_resolution_clock::now();
@@ -257,7 +259,7 @@ void run_program(std::vector<std::shared_ptr<vertex>> *vertices) {
     }
     ticks_t end_loop = std::chrono::high_resolution_clock::now();
     print_str = "  INFO: End of external loop ";
-    print_str.append(std::to_string(i)).append(" duration (ms) ").
+    print_str.append(std::to_string(i+1)).append(" duration (ms) ").
         append(std::to_string((ms_t(end_loop - start_loop)).count())).append("\n");
     if(is_rank0) std::cout<<print_str;
   }
@@ -290,23 +292,51 @@ void init_comp(std::vector<std::shared_ptr<vertex>> *vertices) {
 }
 
 bool run_graph_comp(int loop_id, std::vector<std::shared_ptr<vertex>> *vertices) {
-  // TODO - going with the skeleton code
-  ticks_t start_ticks = std::chrono::high_resolution_clock::now();
+  std::string gap = "    ";
+
+  ticks_t start_ticks = hrc_t::now();
   init_loop(vertices);
-  ticks_t running_ticks = std::chrono::high_resolution_clock::now();
-  std::string print_str = "    INFO: Init loop duration (ms) ";
+  ticks_t running_ticks = hrc_t::now();
+
+  std::string print_str = gap;
+  print_str.append("INFO: Init loop duration (ms) ");
   print_str.append(std::to_string((ms_t(running_ticks - start_ticks)).count())).append("\n");
   if(is_rank0) std::cout<<print_str;
 
   // assume twoRaisedToK can be divisible by ParallelOps.parallelInstanceCount
   int iterations_per_parallel_instance = two_raised_to_k / parallel_instance_count;
-  for (int iter = 0; iter < iterations_per_parallel_instance; ++iter){
-    int final_iter = iter+(parallel_instance_id*iterations_per_parallel_instance);
 
+  print_str = gap;
+  print_str.append("INFO: Parallel instance ").append(std::to_string(parallel_instance_id))
+      .append(" starting [").append(std::to_string(iterations_per_parallel_instance))
+      .append("/").append(std::to_string(two_raised_to_k)).append("] iterations").append("\n");
+  if(is_rank0) std::cout<<print_str;
+
+  ticks_t iterations_ticks = hrc_t::now();
+  for (int iter = 0; iter < iterations_per_parallel_instance; ++iter){
+
+    ticks_t iter_ticks = std::chrono::high_resolution_clock::now();
+    int final_iter = iter+(parallel_instance_id*iterations_per_parallel_instance);
     int thread_id = 0;
     // TODO - add threads here
     run_super_steps(vertices, thread_id, final_iter, start_ticks);
+    running_ticks = hrc_t::now();
+
+    print_str = gap;
+    print_str.append("  INFO: Iteration [").append(std::to_string(iter+1))
+        .append("/").append(std::to_string(iterations_per_parallel_instance))
+        .append("] duration (ms) ").append(std::to_string(ms_t(running_ticks - iter_ticks).count())).append("\n");
+    if (is_rank0) std::cout<<print_str;
   }
+  running_ticks = hrc_t::now();
+
+  print_str = gap;
+  print_str.append("INFO: Parallel instance ").append(std::to_string(parallel_instance_id))
+      .append(" ended [").append(std::to_string(iterations_per_parallel_instance))
+      .append("/").append(std::to_string(two_raised_to_k)).append("] iterations, duration (ms)")
+      .append(std::to_string(ms_t(running_ticks - iterations_ticks).count())).append("\n");
+  if(is_rank0) std::cout<<print_str;
+
   return false;
 }
 

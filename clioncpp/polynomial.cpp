@@ -20,9 +20,9 @@ std::shared_ptr<polynomial> polynomial::create_irreducible(int degree) {
   }
 }
 
-std::shared_ptr<polynomial> polynomial::create_irreducible(int degree, std::default_random_engine &re) {
+std::shared_ptr<polynomial> polynomial::create_irreducible(int degree, std::function<int()> &gen_rnd_byte) {
   while (true){
-    std::shared_ptr<polynomial> p = create_random(degree, re);
+    std::shared_ptr<polynomial> p = create_random(degree, gen_rnd_byte);
     if (!p->is_reducible()){
       return p;
     }
@@ -72,19 +72,13 @@ std::shared_ptr<polynomial> polynomial::create_random(int degree){
   return create_from_bytes(bytes, degree);
 }
 
-std::shared_ptr<polynomial> polynomial::create_random(int degree, std::default_random_engine &re) {
-//  std::default_random_engine re(seed);
-  std::uniform_int_distribution<int> unif(-128,127);
-
-  std::vector<char> bytes((unsigned long) ((degree / 8) + 1));
-  auto gen = std::bind(unif, re);
-  std::generate(std::begin(bytes), std::end(bytes), gen);
-
-  // TODO - debug
-  bytes[0] = -8;
-  std::cout<<"TODO: DEBUG: Initial bytes"<<std::endl;
-  for (const int &b : bytes){
-    std::cout<<b<<" ";
+std::shared_ptr<polynomial> polynomial::create_random(int degree, std::function<int()> &gen_rnd_byte) {
+  int len =  ((degree / 8) + 1);
+  std::vector<char> bytes((unsigned long) len);
+  for (int i = 0; i < len; ++i){
+    // It's OK to cast this to char because our rnd generator
+    // generates only within [-128,127] range
+    bytes.push_back((char &&) gen_rnd_byte());
   }
   return create_from_bytes(bytes, degree);
 }
@@ -145,20 +139,12 @@ std::shared_ptr<polynomial> polynomial::poly_xor(std::shared_ptr<polynomial> tha
                       std::inserter(diff0, diff0.begin()));
   dgrs0 = diff0;
 
-  // TODO - debug
-  std::cout<<"dgrs0 after dgrs0-that.degrees: size: " << dgrs0.size() << "[ ";
-  for (const long &v : dgrs0){
-    std::cout<<v<<" ";
-  }
-  std::cout<<" ]"<<std::endl;
-
   // The copy constructor copies content of "*(that->degrees)"
   std::shared_ptr<std::set<long, rev_comp_t>> dgrs1 = std::make_shared<std::set<long, rev_comp_t>>(*(that->degrees));
   std::set<long, rev_comp_t> diff1(rev_comparator);
   std::set_difference((*dgrs1).begin(), (*dgrs1).end(), (*degrees).begin(), (*degrees).end(),
                       std::inserter(diff1, diff1.begin()));
   *dgrs1 = diff1;
-
   (*dgrs1).insert(dgrs0.begin(), dgrs0.end());
 
   // Can't call make_shared because polynomical constructor is private, so can be used only within polynomial class

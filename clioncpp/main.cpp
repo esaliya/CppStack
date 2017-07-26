@@ -306,11 +306,15 @@ void init_loop(std::vector<std::shared_ptr<vertex>> *vertices) {
   MPI_Bcast(&per_loop_random_seed, 1, MPI_LONG_LONG, 0, MPI_COMM_WORLD);
 
   std::default_random_engine re(per_loop_random_seed);
-  int degree = 3+log2(k);
-  gf = galois_field::getInstance(1<<degree, (int)polynomial::create_irreducible(degree, re)->to_long());
+  std::uniform_int_distribution<int> uni_id_byte(-128,127);
 
-  std::uniform_int_distribution<long> unid_1;
-  auto gen_1 = std::bind(unid_1, re);
+  int degree = 3+log2(k);
+
+  std::function<int()> gen_rnd_byte = std::bind(uni_id_byte, re);
+  gf = galois_field::getInstance(1<<degree, (int)polynomial::create_irreducible(degree, gen_rnd_byte)->to_long());
+
+  std::uniform_int_distribution<long> uni_ld;
+  std::function<long()> gen_rnd_long = std::bind(uni_ld, re);
 
   int displas = p_ops->my_vertex_displas;
   int count = p_ops->my_vertex_count;
@@ -319,7 +323,7 @@ void init_loop(std::vector<std::shared_ptr<vertex>> *vertices) {
     // the same number of times, so when each of them take different
     // parts from this generated sequence they (the values) will still
     // be different and random.
-    long uniq_rand_val = gen_1();
+    long uniq_rand_val = gen_rnd_long();
     if (i >= displas && i < displas+count){
       (*vertices)[i-displas]->uniq_rand_seed = uniq_rand_val;
     }
@@ -328,15 +332,15 @@ void init_loop(std::vector<std::shared_ptr<vertex>> *vertices) {
   // Note, in C++ the distribution is in closed interval [a,b]
   // whereas in Java it's [a,b), so the random.nextInt(twoRaisedToK)
   // equivalent in C++ is [0,two_raised_to_k - 1]
-  std::uniform_int_distribution<int> unid_2(0,two_raised_to_k-1);
-  auto gen_2 = std::bind(unid_2, re);
+  std::uniform_int_distribution<int> uni_id_2tothek(0,two_raised_to_k-1);
+  std::function<int()> gen_rnd_int = std::bind(uni_id_2tothek, re);
   for (const auto &kv : (*p_ops->vertex_label_to_world_rank)){
     int label = kv.first;
-    (*random_assignments)[label] = gen_2();
+    (*random_assignments)[label] = gen_rnd_int();
   }
 
   for (int i = 0; i < k-1; ++i){
-    completion_vars.get()[i] = gen_2();
+    completion_vars.get()[i] = gen_rnd_int();
   }
 
   for (const std::shared_ptr<vertex> &v : (*vertices)){

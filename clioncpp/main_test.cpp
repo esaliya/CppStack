@@ -12,9 +12,25 @@
 #include <boost/foreach.hpp>
 #include <set>
 #include <bitset>
+#include <ares_build.h>
 #include "test_map_class.hpp"
 #include "map_constructor.hpp"
 #include "polynomial.hpp"
+
+void pass_bind_test_helper(
+    std::function<int()> &bind) {
+  std::cout<<bind()<<std::endl;
+}
+
+void pass_bind_test(){
+  std::default_random_engine re2(100);
+  std::uniform_int_distribution<int> unif(-128,127);
+  std::function<int()> gen = std::bind(unif, re2);
+  for (int i = 0; i < 5; ++i) {
+    pass_bind_test_helper(
+        gen);
+  }
+}
 
 void pass_by_ref_2_internal_internal(int &z){
   z = 30;
@@ -507,6 +523,7 @@ void test(){
 }
 
 int main() {
+  pass_bind_test();
 //  poly_test();
 //  pass_by_ref_test_2();
 //  rand_pass_test();
@@ -528,7 +545,7 @@ int main() {
 //  assign_to_pointer_test2();
 //  assign_to_pointer_test();
 //  pass_by_ref_test();
-  test_set_clear();
+//  test_set_clear();
 //  test_object_creation_and_shared_ptr();
 //  test_shared_ptr_for_set();
 //  test_comparator();

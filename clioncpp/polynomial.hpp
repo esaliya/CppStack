@@ -19,7 +19,7 @@ public:
   static const std::shared_ptr<polynomial> ONE;
 
   static std::shared_ptr<polynomial> create_irreducible(int degree);
-  static std::shared_ptr<polynomial> create_irreducible(int degree, std::default_random_engine &re);
+  static std::shared_ptr<polynomial> create_irreducible(int degree, std::function<int()> &gen_rnd_byte);
 
   long to_long();
 
@@ -32,7 +32,7 @@ private:
   static std::shared_ptr<polynomial> create_from_long(long l);
   static std::shared_ptr<polynomial> create_from_bytes(std::vector<char> bytes, int degree);
   static std::shared_ptr<polynomial> create_random(int degree);
-  static std::shared_ptr<polynomial> create_random(int degree, std::default_random_engine &re);
+  static std::shared_ptr<polynomial> create_random(int degree, std::function<int()> &gen_rnd_byte);
   static std::shared_ptr<std::set<long, rev_comp_t>> create_degrees_collection();
 
   static bool test_bit(long v, int n);

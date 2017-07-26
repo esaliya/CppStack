@@ -12,7 +12,6 @@
 #include <boost/foreach.hpp>
 #include <set>
 #include <bitset>
-#include <ares_build.h>
 #include "test_map_class.hpp"
 #include "map_constructor.hpp"
 #include "polynomial.hpp"

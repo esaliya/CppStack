@@ -319,7 +319,7 @@ bool run_graph_comp(int loop_id, std::vector<std::shared_ptr<vertex>> *vertices)
     int final_iter = iter+(parallel_instance_id*iterations_per_parallel_instance);
     int thread_id = 0;
     // TODO - add threads here
-    run_super_steps(vertices, thread_id, final_iter, start_ticks);
+    run_super_steps(vertices, thread_id, final_iter, iter_ticks);
     running_ticks = hrc_t::now();
 
     print_str = gap;
@@ -391,7 +391,7 @@ void init_loop(std::vector<std::shared_ptr<vertex>> *vertices) {
 }
 
 void run_super_steps(std::vector<std::shared_ptr<vertex>> *vertices, int iter, int thread_id, ticks_t &start_time) {
-  int worker_steps = 2;// TODO - correct worker steps
+  int worker_steps = max_iterations + 1;
   for (int ss = 0; ss < worker_steps; ++ss){
     if (ss > 0){
       recv_msgs(vertices, ss);
@@ -404,7 +404,6 @@ void run_super_steps(std::vector<std::shared_ptr<vertex>> *vertices, int iter, i
       send_msgs(vertices, ss);
     }
   }
-
   finalize_iteration(vertices, thread_id);
 }
 

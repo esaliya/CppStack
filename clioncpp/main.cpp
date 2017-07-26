@@ -221,7 +221,7 @@ int parse_args(int argc, char **argv) {
 void run_program(std::vector<std::shared_ptr<vertex>> *vertices) {
   ticks_t start_prog = std::chrono::system_clock::now();
   std::time_t start_prog_time = std::chrono::system_clock::to_time_t(start_prog);
-  std::string print_str = "\nINFO: Graph computation started on ";
+  std::string print_str = "\nINFO: Run program started on ";
   print_str.append(std::ctime(&start_prog_time));
   pretty_print_config(print_str);
   if (is_rank0){
@@ -230,10 +230,10 @@ void run_program(std::vector<std::shared_ptr<vertex>> *vertices) {
 
   // get number of iterations for a target error bound (epsilon)
   double prob_success = 0.2;
-  int iter = (int) round(log(epsilon) / log(1 - prob_success));
+  int external_loops = (int) round(log(epsilon) / log(1 - prob_success));
 
   print_str = "INFO: ";
-  print_str.append(std::to_string(iter)).append(" assignments will be evaluated for epsilon ")
+  print_str.append(std::to_string(external_loops)).append(" assignments will be evaluated for epsilon ")
       .append(std::to_string(epsilon)).append("\n");
   if (is_rank0){
     std::cout<<print_str;
@@ -243,8 +243,8 @@ void run_program(std::vector<std::shared_ptr<vertex>> *vertices) {
   bool found_path = false;
   init_comp(vertices);
 
-  for(int i = 0; i < iter; ++i){
-    print_str = "  INFO: Start of loop ";
+  for(int i = 0; i < external_loops; ++i){
+    print_str = "  INFO: Start of external loop ";
     print_str.append(std::to_string(i)).append("\n");
     if (is_rank0) std::cout<<print_str;
 
@@ -254,7 +254,7 @@ void run_program(std::vector<std::shared_ptr<vertex>> *vertices) {
       break;
     }
     ticks_t end_loop = std::chrono::high_resolution_clock::now();
-    print_str = "  INFO: End of loop ";
+    print_str = "  INFO: End of external loop ";
     print_str.append(std::to_string(i)).append(" duration (ms) ").
         append(std::to_string((ms_t(end_loop - start_loop)).count())).append("\n");
     if(is_rank0) std::cout<<print_str;
@@ -266,13 +266,13 @@ void run_program(std::vector<std::shared_ptr<vertex>> *vertices) {
   print_str.append(std::to_string(k)).append("-path");
   if (is_rank0) std::cout<<print_str<<std::endl;
 
-  print_str = "INFO: Loops total time (ms)";
+  print_str = "INFO: External loops total time (ms)";
   print_str.append(std::to_string((ms_t(end_loops - start_loops)).count())).append("\n");
 
   ticks_t end_prog = std::chrono::high_resolution_clock::now();
   std::time_t end_prog_time = std::chrono::system_clock::to_time_t(end_prog);
 
-  print_str.append("INFO: Graph computation ended on ");
+  print_str.append("INFO: Run program ended on ");
   print_str.append(std::ctime(&start_prog_time));
 
   if(is_rank0){
@@ -292,10 +292,12 @@ bool run_graph_comp(int loop_id, std::vector<std::shared_ptr<vertex>> *vertices)
   init_loop(vertices);
   ticks_t start_ticks = std::chrono::high_resolution_clock::now();
 
-  int iterations_per_parallel_instance = 1;
+  // assume twoRaisedToK can be divisible by ParallelOps.parallelInstanceCount
+  int iterations_per_parallel_instance = two_raised_to_k / parallel_instance_count;
   for (int iter = 0; iter < iterations_per_parallel_instance; ++iter){
     int final_iter = iter+(parallel_instance_id*iterations_per_parallel_instance);
     int thread_id = 0;
+    // TODO - add threads here
     run_super_steps(vertices, thread_id, final_iter, start_ticks);
   }
   return false;

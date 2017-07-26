@@ -29,7 +29,6 @@ std::shared_ptr<polynomial> polynomial::create_irreducible(int degree, std::func
   }
 }
 
-// TODO - Check with Jose
 long polynomial::to_long() {
   long b = 0L;
   for (const long &v : (*degrees)){
@@ -152,19 +151,13 @@ std::shared_ptr<polynomial> polynomial::poly_xor(std::shared_ptr<polynomial> tha
 }
 
 std::shared_ptr<polynomial> polynomial::mod(std::shared_ptr<polynomial> that) {
-  // TODO - debug
-  std::cout<<"in mod \"this\" " << (*this);
   long da = get_degree();
   long db = that->get_degree();
   std::shared_ptr<polynomial> reg = std::shared_ptr<polynomial>(new polynomial(degrees));
   for (long i = (da - db); compare(i, 0) >= 0; i = i - 1){
     if (reg->has_degree(i+db)){
       std::shared_ptr<polynomial> shifted = that->shift_left(i);
-      // TODO - debug
-      std::cout<<"in mod \"shifted\" "<<(*shifted) << "  \"reg\" "<<(*reg);
       reg = reg->poly_xor(shifted);
-      // TODO - debug
-      std::cout<<"in mod \"reg after xor\" "<<(*reg);
     }
   }
   return reg;
@@ -211,11 +204,7 @@ std::shared_ptr<polynomial> polynomial::gcd(std::shared_ptr<polynomial> that) {
   std::shared_ptr<polynomial> a = std::shared_ptr<polynomial>(new polynomial(shared_from_this()));
   while (!that->is_empty()) {
     std::shared_ptr<polynomial> t = std::shared_ptr<polynomial>(new polynomial(that));
-    // TODO - debug
-    std::cout<<"before mod \"that\" "<<(*that) << " \"  a\" " << (*a);
     that = a->mod(that);
-    // TODO - debug
-    std::cout<<"after mod \"that\" "<<(*that)<< " \"  a\" " << (*a);
     a = t;
   }
   return a;
@@ -242,8 +231,6 @@ long polynomial::get_degree() {
 }
 
 bool polynomial::is_empty() {
-  // TODO - debug
-  int x = degrees->size();
   return degrees->empty();
 }
 
@@ -271,14 +258,6 @@ bool polynomial::get_reducibility_ben_or() {
   long degree = get_degree();
   for (int i = 1; i <= (int) (degree / 2); i++) {
     std::shared_ptr<polynomial> b = reduce_exponent(i);
-
-    // TODO - debug
-    std::cout<<"reduce exponent b";
-    for (const long &v : (*b->degrees)){
-      std::cout<<v<<" ";
-    }
-    std::cout<<std::endl;
-
     std::shared_ptr<polynomial> g = gcd(b);
     if (g->compare(ONE) != 0) {
       return true;

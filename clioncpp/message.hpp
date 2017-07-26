@@ -18,9 +18,6 @@ public:
     short* b = buffer.get();
     b[offset] = dim_a;
     std::copy(data.get(), data.get()+dim_a, &b[offset+1]);
-    // TODO - debug
-    short original = data.get()[0];
-    short copied = b[offset+1];
   }
 
   void load(std::shared_ptr<short> buffer, int offset, int recvd_msg_size){
@@ -40,8 +37,6 @@ public:
 
   void set_data_and_msg_size(std::shared_ptr<short> data, int msgSize) {
     this->data = data;
-    // TODO - debug
-    short original = this->data.get()[0];
     // +1 to store dimension
     this->msg_size = msgSize+1;
     dim_a = (short) msgSize;

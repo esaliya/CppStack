@@ -16,6 +16,14 @@
 #include "map_constructor.hpp"
 #include "polynomial.hpp"
 
+void rnd_pointer_test(){
+  std::default_random_engine *re = new std::default_random_engine(345678L);
+  std::uniform_int_distribution<int> *uni_int_dist = new std::uniform_int_distribution<int>(0,10);
+//  std::uniform_int_distribution<int> uni_int_dist(0,10);
+  std::cout<<(*uni_int_dist)(*re)<<std::endl;
+}
+
+
 void pass_bind_test_helper(
     std::function<int()> &bind) {
   std::cout<<bind()<<std::endl;
@@ -68,6 +76,17 @@ void test_set_remove(){
     std::cout<<v<<std::endl;
   }
 }
+
+void int_bitcount(){
+  int x = 7;
+  int y = -7;
+  std::bitset<sizeof(int)*8> bs1((unsigned long long int) x);
+  std::bitset<sizeof(int)*8> bs2((unsigned long long int) y);
+  std::cout<<bs1<<std::endl;
+  std::cout<<bs2<<std::endl;
+
+}
+
 
 int bit_count(long v){
   std::bitset<sizeof(long)*8> bs((unsigned long)v);
@@ -522,7 +541,9 @@ void test(){
 }
 
 int main() {
-  pass_bind_test();
+  rnd_pointer_test();
+//  int_bitcount();
+//  pass_bind_test();
 //  poly_test();
 //  pass_by_ref_test_2();
 //  rand_pass_test();

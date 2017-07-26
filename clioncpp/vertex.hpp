@@ -12,6 +12,7 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <iostream>
+#include <bitset>
 #include "recv_vertex_buffer.hpp"
 #include "message.hpp"
 #include "galois_field.hpp"
@@ -57,8 +58,10 @@ public:
     msg = nullptr;
     delete recvd_msgs;
     recvd_msgs = nullptr;
-    delete opt_tbl;
-    opt_tbl = nullptr;
+    delete uni_int_dist;
+    uni_int_dist = nullptr;
+    delete rnd_engine;
+    rnd_engine = nullptr;
   }
 
   // locally allocated, so no need of shared_ptr
@@ -74,28 +77,38 @@ public:
   long uniq_rand_seed;
 
   void compute(int super_step, int iter, std::shared_ptr<int> completion_vars, std::shared_ptr<std::map<int, int>> random_assignments){
-    // TODO - complete compute()
+    int I = super_step+1;
+    if (super_step == 0){
+      reset(iter, random_assignments);
+    } else if (super_step > 0){
+      int field_size = gf->get_field_size();
+      int poly = 0;
+      for (const std::shared_ptr<message> &msg : (*recvd_msgs)){
+        int weight = (*uni_int_dist)(*rnd_engine);
+        int product = gf->multiply(opt_tbl.get()[1], msg->get(I-1));
+        product = gf->multiply(weight, product);
+        poly = gf->add(poly, product);
+      }
+      opt_tbl.get()[I] = (short)poly;
+    }
 
     // TODO - dummy comp - list recvd messages
-    if (super_step == 0){
-      std::shared_ptr<short> data = std::shared_ptr<short>(new short[1](), std::default_delete<short[]>());
-      data.get()[0] = (short) label;
-      msg->set_data_and_msg_size(data, 1);
-    } else if (super_step > 0){
-      std::string str = "v";
-      str.append(std::to_string(label)).append(" recvd [ ");
-      for (const std::shared_ptr<message> msg : (*recvd_msgs)){
-        str.append(std::to_string(msg->get(0))).append(" ");
-      }
-      str.append("] ss=").append(std::to_string(super_step)).append("\n");
-      std::cout<<str;
-    }
+//    if (super_step == 0){
+//      std::shared_ptr<short> data = std::shared_ptr<short>(new short[1](), std::default_delete<short[]>());
+//      data.get()[0] = (short) label;
+//      msg->set_data_and_msg_size(data, 1);
+//    } else if (super_step > 0){
+//      std::string str = "v";
+//      str.append(std::to_string(label)).append(" recvd [ ");
+//      for (const std::shared_ptr<message> msg : (*recvd_msgs)){
+//        str.append(std::to_string(msg->get(0))).append(" ");
+//      }
+//      str.append("] ss=").append(std::to_string(super_step)).append("\n");
+//      std::cout<<str;
+//    }
   }
 
   int prepare_send(int super_step, int shift){
-    // TODO - complete prepare_send()
-
-    // TODO - for now let's send the vertex's label
     for (const auto &kv : (*outrank_to_send_buffer)){
       std::shared_ptr<vertex_buffer> b = kv.second;
       int offset = shift + b->get_offset_factor() * msg->get_msg_size();
@@ -105,7 +118,6 @@ public:
   }
 
   void process_recvd(int super_step, int shift){
-    // TODO - complete process_recvd()
     for (int i = 0; i < recv_buffers->size(); ++i){
       std::shared_ptr<recv_vertex_buffer> b = (*recv_buffers)[i];
       std::shared_ptr<message> recvd_msg = (*recvd_msgs)[i];
@@ -117,15 +129,32 @@ public:
   void init(int k , int r, std::shared_ptr<galois_field> gf){
     this->k = k;
     this->gf = gf;
-    opt_tbl = new short[k+1];
+    opt_tbl = std::shared_ptr<short>(new short[k+1](), std::default_delete<short[]>());
   }
 
-  void reset(){
-    // TODO - complete reset()
+  void reset(int iter, std::shared_ptr<std::map<int,int>> random_assignments){
+    /* create the vertex unique random engine */
+    // Note, in C++ the distribution is in closed interval [a,b]
+    // whereas in Java it's [a,b), so the random.nextInt(fieldSize)
+    // equivalent in C++ is [0,gf->get_field_size() - 1]
+    uni_int_dist = new std::uniform_int_distribution<int>(0, gf->get_field_size()-1);
+    rnd_engine = new std::default_random_engine(uniq_rand_seed);
+
+    // set arrays in vertex data
+    for (int i = 0; i < k+1; ++i){
+      opt_tbl.get()[i] = 0;
+    }
+
+    // dot product is bitwise 'and'
+    int dot_product = (*random_assignments)[label] & iter;
+    std::bitset<sizeof(int)*8> bs((unsigned int)dot_product);
+    int eigen_val = (bs.count() % 2 == 1) ? 0 : 1;
+    opt_tbl.get()[1] = (short) eigen_val;
+    msg->set_data_and_msg_size(opt_tbl, (k+1));
   }
 
   void finalize_iteration(){
-    total_sum = (short) (*gf).add(total_sum, opt_tbl[k]);
+    total_sum = (short) (*gf).add(total_sum, opt_tbl.get()[k]);
   }
 
   bool finalize_iterations(){
@@ -135,13 +164,10 @@ public:
 private:
   int k;
   std::shared_ptr<galois_field> gf;
-  short* opt_tbl = nullptr;
+  std::shared_ptr<short> opt_tbl = nullptr;
   short total_sum;
-  std::uniform_real_distribution<double> unif;
-  std::default_random_engine re;
-
-
-
+  std::uniform_int_distribution<int>* uni_int_dist;
+  std::default_random_engine* rnd_engine;
 };
 
 

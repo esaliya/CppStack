@@ -232,7 +232,7 @@ void run_program(std::vector<std::shared_ptr<vertex>> *vertices) {
   double prob_success = 0.2;
   int external_loops = (int) round(log(epsilon) / log(1 - prob_success));
 
-  print_str = "INFO: ";
+  print_str = "  INFO: ";
   print_str.append(std::to_string(external_loops)).append(" assignments will be evaluated for epsilon ")
       .append(std::to_string(epsilon)).append("\n");
   if (is_rank0){
@@ -243,6 +243,8 @@ void run_program(std::vector<std::shared_ptr<vertex>> *vertices) {
   bool found_path = false;
   init_comp(vertices);
 
+  // TODO - debug - set external_loops to 1
+  external_loops = 1;
   for(int i = 0; i < external_loops; ++i){
     print_str = "  INFO: Start of external loop ";
     print_str.append(std::to_string(i)).append("\n");
@@ -261,12 +263,12 @@ void run_program(std::vector<std::shared_ptr<vertex>> *vertices) {
   }
 
   ticks_t end_loops = std::chrono::high_resolution_clock::now();
-  print_str = "INFO: Graph ";
+  print_str = "  INFO: Graph ";
   print_str.append(found_path ? "contains " : "does not contain ").append("a ");
   print_str.append(std::to_string(k)).append("-path");
   if (is_rank0) std::cout<<print_str<<std::endl;
 
-  print_str = "INFO: External loops total time (ms)";
+  print_str = "  INFO: External loops total time (ms) ";
   print_str.append(std::to_string((ms_t(end_loops - start_loops)).count())).append("\n");
 
   ticks_t end_prog = std::chrono::high_resolution_clock::now();
@@ -289,13 +291,18 @@ void init_comp(std::vector<std::shared_ptr<vertex>> *vertices) {
 
 bool run_graph_comp(int loop_id, std::vector<std::shared_ptr<vertex>> *vertices) {
   // TODO - going with the skeleton code
-  init_loop(vertices);
   ticks_t start_ticks = std::chrono::high_resolution_clock::now();
+  init_loop(vertices);
+  ticks_t running_ticks = std::chrono::high_resolution_clock::now();
+  std::string print_str = "    INFO: Init loop duration (ms) ";
+  print_str.append(std::to_string((ms_t(running_ticks - start_ticks)).count())).append("\n");
+  if(is_rank0) std::cout<<print_str;
 
   // assume twoRaisedToK can be divisible by ParallelOps.parallelInstanceCount
   int iterations_per_parallel_instance = two_raised_to_k / parallel_instance_count;
   for (int iter = 0; iter < iterations_per_parallel_instance; ++iter){
     int final_iter = iter+(parallel_instance_id*iterations_per_parallel_instance);
+
     int thread_id = 0;
     // TODO - add threads here
     run_super_steps(vertices, thread_id, final_iter, start_ticks);

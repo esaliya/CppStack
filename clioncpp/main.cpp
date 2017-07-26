@@ -27,7 +27,7 @@ void recv_msgs(std::vector<std::shared_ptr<vertex>> *vertices, int super_step);
 void process_recvd_msgs(std::vector<std::shared_ptr<vertex>> *vertices, int super_step, int thread_id);
 void send_msgs(std::vector<std::shared_ptr<vertex>> *vertices, int super_step);
 void finalize_iteration(std::vector<std::shared_ptr<vertex>> *vertices, int thread_id);
-void finalize_iterations(std::vector<std::shared_ptr<vertex>> *vertices);
+bool finalize_iterations(std::vector<std::shared_ptr<vertex>> *vertices);
 
 void pretty_print_config(std::string &str);
 int log2(int x);
@@ -337,7 +337,10 @@ bool run_graph_comp(int loop_id, std::vector<std::shared_ptr<vertex>> *vertices)
       .append(std::to_string(ms_t(running_ticks - iterations_ticks).count())).append("\n");
   if(is_rank0) std::cout<<print_str;
 
-  return false;
+  int found_k_path = (finalize_iterations(vertices) ? 1 : 0);
+  MPI_Reduce(MPI_IN_PLACE, &found_k_path, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+
+  return found_k_path > 0;
 }
 
 void init_loop(std::vector<std::shared_ptr<vertex>> *vertices) {
@@ -433,8 +436,16 @@ void finalize_iteration(std::vector<std::shared_ptr<vertex>> *vertices, int thre
 
 }
 
-void finalize_iterations(std::vector<std::shared_ptr<vertex>> *vertices) {
-
+bool finalize_iterations(std::vector<std::shared_ptr<vertex>> *vertices) {
+  // Note, we can't break the loop after finding on true
+  // because the finalize_iterations() need to be called on all vertices
+  bool found_k_path = false;
+  for (const auto &v : (*vertices)) {
+    if (v->finalize_iterations()) {
+      found_k_path = true;
+    }
+  }
+  return found_k_path;
 }
 
 void pretty_print_config(std::string &str){

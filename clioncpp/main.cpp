@@ -408,6 +408,7 @@ void run_super_steps(std::vector<std::shared_ptr<vertex>> *vertices, int iter, i
 }
 
 void compute(int iter, std::vector<std::shared_ptr<vertex>> *vertices, int super_step, int thread_id) {
+  // TODO - introduce threads here
   for (const auto &vertex : (*vertices)){
     vertex->compute(super_step, iter, nullptr, nullptr);
   }
@@ -418,12 +419,14 @@ void recv_msgs(std::vector<std::shared_ptr<vertex>> *vertices, int super_step) {
 }
 
 void process_recvd_msgs(std::vector<std::shared_ptr<vertex>> *vertices, int super_step, int thread_id) {
+  // TODO - introduce threads here
   for (const auto &vertex : (*vertices)){
     vertex->process_recvd(super_step, p_ops->BUFFER_OFFSET);
   }
 }
 
 void send_msgs(std::vector<std::shared_ptr<vertex>> *vertices, int super_step) {
+  // TODO - think if you can introduce threads here.
   int msg_size = -1;
   for (const auto &vertex : (*vertices)){
     msg_size = vertex->prepare_send(super_step, p_ops->BUFFER_OFFSET);
@@ -432,7 +435,10 @@ void send_msgs(std::vector<std::shared_ptr<vertex>> *vertices, int super_step) {
 }
 
 void finalize_iteration(std::vector<std::shared_ptr<vertex>> *vertices, int thread_id) {
-
+  // TODO - introduce threads here
+  for (const auto &vertex : (*vertices)){
+    vertex->finalize_iteration();
+  }
 }
 
 bool finalize_iterations(std::vector<std::shared_ptr<vertex>> *vertices) {

@@ -254,14 +254,16 @@ void run_program(std::vector<std::shared_ptr<vertex>> *vertices) {
 
     ticks_t start_loop = std::chrono::high_resolution_clock::now();
     found_path = run_graph_comp(i, vertices);
-    if (found_path){
-      break;
-    }
+
     ticks_t end_loop = std::chrono::high_resolution_clock::now();
     print_str = "  INFO: End of external loop ";
     print_str.append(std::to_string(i+1)).append(" duration (ms) ").
         append(std::to_string((ms_t(end_loop - start_loop)).count())).append("\n");
     if(is_rank0) std::cout<<print_str;
+
+    if (found_path){
+      break;
+    }
   }
 
   ticks_t end_loops = std::chrono::high_resolution_clock::now();

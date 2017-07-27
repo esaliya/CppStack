@@ -322,7 +322,7 @@ bool run_graph_comp(int loop_id, std::vector<std::shared_ptr<vertex>> *vertices)
     int final_iter = iter+(parallel_instance_id*iterations_per_parallel_instance);
     int thread_id = 0;
     // TODO - add threads here
-    run_super_steps(vertices, thread_id, final_iter);
+    run_super_steps(vertices, final_iter+1, thread_id);
     running_ticks = hrc_t::now();
 
     print_str = gap;
@@ -438,24 +438,28 @@ void run_super_steps(std::vector<std::shared_ptr<vertex>> *vertices, int iter, i
   gap.append("-- Iter ").append(std::to_string(iter));
 
   std::string print_str = gap;
+  print_str.append(" comp:");
+  print_timing(process_recvd_time_ms, print_str);
+
+  /*print_str = gap;
   print_str.append(" process recvd:");
   print_timing(process_recvd_time_ms, print_str);
 
   print_str = gap;
   print_str.append(" recv:");
-  print_timing(recv_time_ms, print_str);
+  print_timing(recv_time_ms, print_str);*/
 
   print_str = gap;
   print_str.append(" recv total:");
   print_timing((process_recvd_time_ms+recv_time_ms), print_str);
 
-  print_str = gap;
+  /*print_str = gap;
   print_str.append(" send:");
   print_timing(send_time_ms, print_str);
 
   print_str = gap;
   print_str.append(" finalize iter:");
-  print_timing(send_time_ms, print_str);
+  print_timing(finalize_iter_time_ms, print_str);*/
 }
 
 void compute(int iter, std::vector<std::shared_ptr<vertex>> *vertices, int super_step, int thread_id) {

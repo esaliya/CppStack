@@ -442,7 +442,7 @@ void run_super_steps(std::vector<std::shared_ptr<vertex>> *vertices, int iter, i
 
   std::string print_str = gap;
   print_str.append(" comp:");
-  print_timing(process_recvd_time_ms, print_str);
+  print_timing(comp_time_ms, print_str);
 
   print_str = gap;
   print_str.append(" process recvd:");

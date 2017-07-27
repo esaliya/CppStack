@@ -338,9 +338,10 @@ bool run_graph_comp(int loop_id, std::vector<std::shared_ptr<vertex>> *vertices)
   if(is_rank0) std::cout<<print_str;
 
   int found_k_path = (finalize_iterations(vertices) ? 1 : 0);
-  MPI_Reduce(MPI_IN_PLACE, &found_k_path, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+  int found_k_path_max;
+  MPI_Reduce(&found_k_path, &found_k_path_max, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
 
-  return found_k_path > 0;
+  return found_k_path_max > 0;
 }
 
 void init_loop(std::vector<std::shared_ptr<vertex>> *vertices) {

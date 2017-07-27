@@ -56,7 +56,7 @@ void parallel_ops::set_parallel_decomposition(const char *file, int global_vertx
 }
 
 void parallel_ops::simple_graph_partition(const char *file, int global_vertex_count, std::vector<std::shared_ptr<vertex>> *&vertices) {
-  std::chrono::time_point<std::chrono::system_clock> start, end;
+  std::chrono::time_point<std::chrono::high_resolution_clock > start, end;
 
   int q = global_vertex_count/world_procs_count;
   int r = global_vertex_count % world_procs_count;
@@ -80,7 +80,7 @@ void parallel_ops::simple_graph_partition(const char *file, int global_vertex_co
 
   fs.open(file);
 
-  start = std::chrono::system_clock::now();
+  start = std::chrono::high_resolution_clock::now();
   int local_idx;
   for (int i = 0; i < global_vertex_count; ++i) {
     getline(fs, line);
@@ -95,32 +95,15 @@ void parallel_ops::simple_graph_partition(const char *file, int global_vertex_co
       break;
     }
   }
-  end = std::chrono::system_clock::now();
-  std::chrono::duration<double> elapsed_seconds = end-start;
-
-#ifndef NDEBUG
-  std::string debug_str = (world_proc_rank==0) ? "DEBUG: simple_graph_partition: 2: graph_read elapsed  [ " : " ";
-  debug_str.append(std::to_string(elapsed_seconds.count())).append(" ");
-  debug_str = mpi_gather_string(debug_str);
-  if (world_proc_rank == 0){
-    std::cout<<std::endl<<std::string(debug_str).append("]")<<std::endl;
-  }
-#endif
+  end = std::chrono::high_resolution_clock::now();
+  print_timing(start, end, "simple_graph_partition: graph_read");
 
   fs.close();
 
-  start = std::chrono::system_clock::now();
+  start = std::chrono::high_resolution_clock::now();
   find_nbrs(global_vertex_count, local_vertex_count, vertices);
-  end = std::chrono::system_clock::now();
-  elapsed_seconds = end-start;
-#ifndef NDEBUG
-  debug_str = (world_proc_rank==0) ? "DEBUG: simple_graph_partition: 3: find_nbrs elapsed(s)  [ " : " ";
-  debug_str.append(std::to_string(elapsed_seconds.count())).append(" ");
-  debug_str = mpi_gather_string(debug_str);
-  if (world_proc_rank == 0){
-    std::cout<<std::endl<<std::string(debug_str).append("]")<<std::endl;
-  }
-#endif
+  end = std::chrono::high_resolution_clock::now();
+  print_timing(start, end, "simple_graph_partition: find_nbrs total");
 }
 
 void parallel_ops::decompose_among_threads(std::vector<std::shared_ptr<vertex>> *&vertices) {
@@ -143,7 +126,7 @@ void parallel_ops::decompose_among_threads(std::vector<std::shared_ptr<vertex>> 
 void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, std::vector<std::shared_ptr<vertex>> *&vertices) {
   std::chrono::time_point<std::chrono::high_resolution_clock > start_ms, end_ms;
 
-#ifndef LONG_DEBUG
+#ifdef LONG_DEBUG
   int tmp_lbl = 0;
 #endif
 
@@ -151,7 +134,7 @@ void parallel_ops::find_nbrs(int global_vertex_count, int local_vertex_count, st
   /* Create a map to quickly lookup vertices given their label for my vertices */
   std::map<int, std::shared_ptr<vertex>> *label_to_vertex = new std::map<int, std::shared_ptr<vertex>>();
   for (std::vector<std::shared_ptr<vertex>>::iterator it = vertices->begin(); it != vertices->end(); ++it){
-#ifndef LONG_DEBUG
+#ifdef LONG_DEBUG
     tmp_lbl = (*it)->label;
 #endif
     (*label_to_vertex)[(*it)->label] = *it;

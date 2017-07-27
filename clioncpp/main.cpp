@@ -410,7 +410,7 @@ void run_super_steps(std::vector<std::shared_ptr<vertex>> *vertices, int iter, i
 void compute(int iter, std::vector<std::shared_ptr<vertex>> *vertices, int super_step, int thread_id) {
   // TODO - introduce threads here
   for (const auto &vertex : (*vertices)){
-    vertex->compute(super_step, iter, nullptr, nullptr);
+    vertex->compute(super_step, iter, completion_vars, random_assignments);
   }
 }
 

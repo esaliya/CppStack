@@ -93,19 +93,23 @@ public:
     }
 
     // TODO - dummy comp - list recvd messages
-//    if (super_step == 0){
-//      std::shared_ptr<short> data = std::shared_ptr<short>(new short[1](), std::default_delete<short[]>());
-//      data.get()[0] = (short) label;
-//      msg->set_data_and_msg_size(data, 1);
-//    } else if (super_step > 0){
-//      std::string str = "v";
-//      str.append(std::to_string(label)).append(" recvd [ ");
-//      for (const std::shared_ptr<message> msg : (*recvd_msgs)){
-//        str.append(std::to_string(msg->get(0))).append(" ");
-//      }
-//      str.append("] ss=").append(std::to_string(super_step)).append("\n");
-//      std::cout<<str;
-//    }
+//    std::shared_ptr<short> data = std::shared_ptr<short>(new short[1](), std::default_delete<short[]>());
+//    data.get()[0] = (short) label;
+//    msg->set_data_and_msg_size(data, 1);
+
+    /*if (super_step == 0){
+      std::shared_ptr<short> data = std::shared_ptr<short>(new short[1](), std::default_delete<short[]>());
+      data.get()[0] = (short) label;
+      msg->set_data_and_msg_size(data, 1);
+    } else if (super_step > 0){
+      std::string str = "v";
+      str.append(std::to_string(label)).append(" recvd [ ");
+      for (const std::shared_ptr<message> msg : (*recvd_msgs)){
+        str.append(std::to_string(msg->get(0))).append(" ");
+      }
+      str.append("] ss=").append(std::to_string(super_step)).append("\n");
+      std::cout<<str;
+    }*/
   }
 
   int prepare_send(int super_step, int shift){
@@ -145,6 +149,7 @@ public:
       opt_tbl.get()[i] = 0;
     }
 
+
     // dot product is bitwise 'and'
     int dot_product = (*random_assignments)[label] & iter;
     std::bitset<sizeof(int)*8> bs((unsigned int)dot_product);
@@ -166,8 +171,8 @@ private:
   std::shared_ptr<galois_field> gf;
   std::shared_ptr<short> opt_tbl = nullptr;
   short total_sum;
-  std::uniform_int_distribution<int>* uni_int_dist;
-  std::default_random_engine* rnd_engine;
+  std::uniform_int_distribution<int>* uni_int_dist = nullptr;
+  std::default_random_engine* rnd_engine = nullptr;
 };
 
 

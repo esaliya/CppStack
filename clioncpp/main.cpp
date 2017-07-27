@@ -31,6 +31,7 @@ bool finalize_iterations(std::vector<std::shared_ptr<vertex>> *vertices);
 
 void pretty_print_config(std::string &str);
 int log2(int x);
+void print_timing(const double duration,const std::string &msg);
 
 int global_vertex_count;
 int k;
@@ -394,20 +395,67 @@ void init_loop(std::vector<std::shared_ptr<vertex>> *vertices) {
 }
 
 void run_super_steps(std::vector<std::shared_ptr<vertex>> *vertices, int iter, int thread_id) {
+  std::string gap = "      ";
+  double process_recvd_time_ms = 0;
+  double recv_time_ms = 0;
+  double comp_time_ms = 0;
+  double send_time_ms = 0;
+  double finalize_iter_time_ms = 0;
+
+  ticks_t start_ticks, end_ticks;
+
   int worker_steps = max_iterations + 1;
   for (int ss = 0; ss < worker_steps; ++ss){
     if (ss > 0){
+      start_ticks = hrc_t::now();
       recv_msgs(vertices, ss);
+      end_ticks = hrc_t::now();
+      recv_time_ms += ms_t(end_ticks - start_ticks).count();
+
+      start_ticks = hrc_t::now();
       process_recvd_msgs(vertices, ss, thread_id);
+      end_ticks = hrc_t::now();
+      process_recvd_time_ms += ms_t(end_ticks - start_ticks).count();
     }
 
+    start_ticks = hrc_t::now();
     compute(iter, vertices, ss, thread_id);
+    end_ticks = hrc_t::now();
+    comp_time_ms += ms_t(end_ticks - start_ticks).count();
 
     if (ss< worker_steps - 1){
+      start_ticks = hrc_t::now();
       send_msgs(vertices, ss);
+      end_ticks = hrc_t::now();
+      send_time_ms += ms_t(end_ticks - start_ticks).count();
     }
   }
+  start_ticks = hrc_t::now();
   finalize_iteration(vertices, thread_id);
+  end_ticks = hrc_t::now();
+  finalize_iter_time_ms += ms_t(end_ticks - start_ticks).count();
+
+  gap.append("-- Iter ").append(std::to_string(iter));
+
+  std::string print_str = gap;
+  print_str.append(" process recvd:");
+  print_timing(process_recvd_time_ms, print_str);
+
+  print_str = gap;
+  print_str.append(" recv:");
+  print_timing(recv_time_ms, print_str);
+
+  print_str = gap;
+  print_str.append(" recv total:");
+  print_timing((process_recvd_time_ms+recv_time_ms), print_str);
+
+  print_str = gap;
+  print_str.append(" send:");
+  print_timing(send_time_ms, print_str);
+
+  print_str = gap;
+  print_str.append(" finalize iter:");
+  print_timing(send_time_ms, print_str);
 }
 
 void compute(int iter, std::vector<std::shared_ptr<vertex>> *vertices, int super_step, int thread_id) {
@@ -474,6 +522,19 @@ int log2(int x) {
     x >>= 1;
   }
   return result;
+}
+
+void print_timing(
+    const double duration,
+    const std::string &msg) {
+  double duration_ms, avg_duration_ms, min_duration_ms, max_duration_ms;
+  MPI_Reduce(&duration_ms, &min_duration_ms, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&duration_ms, &max_duration_ms, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+  MPI_Reduce(&duration_ms, &avg_duration_ms, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+  if (p_ops->get_world_proc_rank() == 0){
+    std::cout<<msg<<" [min max avg]ms: ["<< min_duration_ms
+             << " " << max_duration_ms << " " << (avg_duration_ms / p_ops->get_world_procs_count()) << "]" <<std::endl;
+  }
 }
 
 

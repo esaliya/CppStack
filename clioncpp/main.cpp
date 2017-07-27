@@ -11,6 +11,7 @@
 #include "polynomial.hpp"
 
 typedef std::chrono::duration<double, std::milli> ms_t;
+typedef std::chrono::duration<double, std::micro> micros_t;
 typedef std::chrono::time_point<std::chrono::high_resolution_clock> ticks_t;
 
 typedef std::chrono::high_resolution_clock hrc_t;
@@ -405,6 +406,7 @@ void run_super_steps(std::vector<std::shared_ptr<vertex>> *vertices, int iter, i
   ticks_t start_ticks, end_ticks;
 
   int worker_steps = max_iterations + 1;
+
   for (int ss = 0; ss < worker_steps; ++ss){
     if (ss > 0){
       start_ticks = hrc_t::now();
@@ -430,6 +432,7 @@ void run_super_steps(std::vector<std::shared_ptr<vertex>> *vertices, int iter, i
       send_time_ms += ms_t(end_ticks - start_ticks).count();
     }
   }
+
   start_ticks = hrc_t::now();
   finalize_iteration(vertices, thread_id);
   end_ticks = hrc_t::now();
@@ -441,25 +444,25 @@ void run_super_steps(std::vector<std::shared_ptr<vertex>> *vertices, int iter, i
   print_str.append(" comp:");
   print_timing(process_recvd_time_ms, print_str);
 
-  /*print_str = gap;
+  print_str = gap;
   print_str.append(" process recvd:");
   print_timing(process_recvd_time_ms, print_str);
 
   print_str = gap;
   print_str.append(" recv:");
-  print_timing(recv_time_ms, print_str);*/
+  print_timing(recv_time_ms, print_str);
 
   print_str = gap;
   print_str.append(" recv total:");
   print_timing((process_recvd_time_ms+recv_time_ms), print_str);
 
-  /*print_str = gap;
-  print_str.append(" send:");
+  print_str = gap;
+  print_str.append(" send with prepare:");
   print_timing(send_time_ms, print_str);
 
   print_str = gap;
   print_str.append(" finalize iter:");
-  print_timing(finalize_iter_time_ms, print_str);*/
+  print_timing(finalize_iter_time_ms, print_str);
 }
 
 void compute(int iter, std::vector<std::shared_ptr<vertex>> *vertices, int super_step, int thread_id) {
@@ -529,9 +532,9 @@ int log2(int x) {
 }
 
 void print_timing(
-    const double duration,
+    const double duration_ms,
     const std::string &msg) {
-  double duration_ms, avg_duration_ms, min_duration_ms, max_duration_ms;
+  double avg_duration_ms, min_duration_ms, max_duration_ms;
   MPI_Reduce(&duration_ms, &min_duration_ms, 1, MPI_DOUBLE, MPI_MIN, 0, MPI_COMM_WORLD);
   MPI_Reduce(&duration_ms, &max_duration_ms, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
   MPI_Reduce(&duration_ms, &avg_duration_ms, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);

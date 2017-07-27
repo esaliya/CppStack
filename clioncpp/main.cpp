@@ -408,9 +408,6 @@ void run_super_steps(std::vector<std::shared_ptr<vertex>> *vertices, int iter, i
 
   int worker_steps = max_iterations + 1;
 
-  // TODO - debug - set worker_steps to 1
-  worker_steps = 1;
-
   for (int ss = 0; ss < worker_steps; ++ss){
     if (ss > 0){
       start_ticks = hrc_t::now();
@@ -472,51 +469,51 @@ void run_super_steps(std::vector<std::shared_ptr<vertex>> *vertices, int iter, i
 
 void compute(int iter, std::vector<std::shared_ptr<vertex>> *vertices, int super_step, int thread_id) {
   // TODO - debug - dummy sleep
-  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+//  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
   // TODO - introduce threads here
-  /*for (const auto &vertex : (*vertices)){
+  for (const auto &vertex : (*vertices)){
     vertex->compute(super_step, iter, completion_vars, random_assignments);
-  }*/
+  }
 }
 
 void recv_msgs(std::vector<std::shared_ptr<vertex>> *vertices, int super_step) {
   // TODO - debug - dummy sleep
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//  std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
-  /*p_ops->recv_msgs();*/
+  p_ops->recv_msgs();
 }
 
 void process_recvd_msgs(std::vector<std::shared_ptr<vertex>> *vertices, int super_step, int thread_id) {
   // TODO - debug - dummy sleep
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//  std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
   // TODO - introduce threads here
-  /*for (const auto &vertex : (*vertices)){
+  for (const auto &vertex : (*vertices)){
     vertex->process_recvd(super_step, p_ops->BUFFER_OFFSET);
-  }*/
+  }
 }
 
 void send_msgs(std::vector<std::shared_ptr<vertex>> *vertices, int super_step) {
   // TODO - debug - dummy sleep
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//  std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
   // TODO - think if you can introduce threads here.
-  /*int msg_size = -1;
+  int msg_size = -1;
   for (const auto &vertex : (*vertices)){
     msg_size = vertex->prepare_send(super_step, p_ops->BUFFER_OFFSET);
   }
-  p_ops->send_msgs(msg_size);*/
+  p_ops->send_msgs(msg_size);
 }
 
 void finalize_iteration(std::vector<std::shared_ptr<vertex>> *vertices, int thread_id) {
   // TODO - debug - dummy sleep
-  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//  std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
   // TODO - introduce threads here
-  /*for (const auto &vertex : (*vertices)){
+  for (const auto &vertex : (*vertices)){
     vertex->finalize_iteration();
-  }*/
+  }
 }
 
 bool finalize_iterations(std::vector<std::shared_ptr<vertex>> *vertices) {

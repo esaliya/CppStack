@@ -16,6 +16,36 @@
 #include "map_constructor.hpp"
 #include "polynomial.hpp"
 
+typedef std::chrono::duration<double, std::milli> ms_t;
+typedef std::chrono::duration<double, std::micro> micros_t;
+typedef std::chrono::time_point<std::chrono::high_resolution_clock> ticks_t;
+
+typedef std::chrono::high_resolution_clock hrc_t;
+
+void openmp_parfor_test(){
+  int size = 16777216;
+  std::vector<double> *vec = new std::vector<double>((unsigned long) size);
+
+  ticks_t start_ticks = hrc_t::now();
+
+//  omp_set_num_threads(1);
+#pragma omp parallel
+{
+  int num_threads = omp_get_num_threads();
+  std::cout<<"num threads: "<<num_threads;
+#pragma omp for
+  for (int i = 0; i < size; ++i) {
+    (*vec)[i] = sqrt(i);
+  }
+}
+
+  ticks_t end_ticks = hrc_t::now();
+
+  std::cout<<"Loop initialization took (ms) "<<(ms_t(end_ticks - start_ticks).count())<<std::endl;
+
+  delete vec;
+}
+
 void rnd_pointer_test(){
   std::default_random_engine *re = new std::default_random_engine(345678L);
   std::uniform_int_distribution<int> *uni_int_dist = new std::uniform_int_distribution<int>(0,10);
@@ -541,7 +571,8 @@ void test(){
 }
 
 int main() {
-  rnd_pointer_test();
+  openmp_parfor_test();
+//  rnd_pointer_test();
 //  int_bitcount();
 //  pass_bind_test();
 //  poly_test();

@@ -467,6 +467,7 @@ void run_super_steps(std::vector<std::shared_ptr<vertex>> *vertices, int iter, i
 
 void compute(int iter, std::vector<std::shared_ptr<vertex>> *vertices, int super_step, int thread_id) {
   // TODO - introduce threads here
+#pragma omp parallel for
   for (const auto &vertex : (*vertices)){
     vertex->compute(super_step, iter, completion_vars, random_assignments);
   }
@@ -478,6 +479,7 @@ void recv_msgs(std::vector<std::shared_ptr<vertex>> *vertices, int super_step) {
 
 void process_recvd_msgs(std::vector<std::shared_ptr<vertex>> *vertices, int super_step, int thread_id) {
   // TODO - introduce threads here
+#pragma omp parallel for
   for (const auto &vertex : (*vertices)){
     vertex->process_recvd(super_step, p_ops->BUFFER_OFFSET);
   }

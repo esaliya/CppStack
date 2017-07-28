@@ -322,7 +322,9 @@ bool run_graph_comp(int loop_id, std::vector<std::shared_ptr<vertex>> *vertices)
     ticks_t iter_ticks = std::chrono::high_resolution_clock::now();
     int final_iter = iter+(parallel_instance_id*iterations_per_parallel_instance);
     int thread_id = 0;
-    // TODO - add threads here
+    // TODO - add threads here (update: no need, we do threads later)
+    // The difference if I did it here would be to have LRT threads
+    // per iteration.
     run_super_steps(vertices, final_iter+1, thread_id);
     running_ticks = hrc_t::now();
 

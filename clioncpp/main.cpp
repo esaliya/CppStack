@@ -466,11 +466,9 @@ void run_super_steps(std::vector<std::shared_ptr<vertex>> *vertices, int iter, i
 }
 
 void compute(int iter, std::vector<std::shared_ptr<vertex>> *vertices, int super_step, int thread_id) {
-  // TODO - introduce threads here
 #pragma omp parallel for
   for (int i = 0; i < (*vertices).size(); ++i){
     std::shared_ptr<vertex> vertex = (*vertices)[i];
-//  for (const auto &vertex : (*vertices)){
     vertex->compute(super_step, iter, completion_vars, random_assignments);
   }
 }
@@ -480,27 +478,20 @@ void recv_msgs(std::vector<std::shared_ptr<vertex>> *vertices, int super_step) {
 }
 
 void process_recvd_msgs(std::vector<std::shared_ptr<vertex>> *vertices, int super_step, int thread_id) {
-  // TODO - introduce threads here
 #pragma omp parallel for
   for (int i = 0; i < (*vertices).size(); ++i){
     std::shared_ptr<vertex> vertex = (*vertices)[i];
-//  for (const auto &vertex : (*vertices)){
     vertex->process_recvd(super_step, p_ops->BUFFER_OFFSET);
   }
 }
 
 void send_msgs(std::vector<std::shared_ptr<vertex>> *vertices, int super_step) {
-  // TODO - think if you can introduce threads here.
-//  int msg_size = -1;
 #pragma omp parallel for
   for (int i = 0; i < (*vertices).size(); ++i){
     std::shared_ptr<vertex> vertex = (*vertices)[i];
-//  for (const auto &vertex : (*vertices)){
-//    msg_size = vertex->prepare_send(super_step, p_ops->BUFFER_OFFSET);
     vertex->prepare_send(super_step, p_ops->BUFFER_OFFSET);
   }
 
-//  p_ops->send_msgs(msg_size);
   p_ops->send_msgs((*vertices)[0]->msg->get_msg_size());
 }
 

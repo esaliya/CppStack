@@ -111,7 +111,7 @@ public:
       std::string str = "v";
       str.append(std::to_string(label)).append(" recvd [ ");
       for (const std::shared_ptr<message> msg : (*recvd_msgs)){
-        str.append(std::to_string(msg->get(0))).append(" ");
+        str.append(std::to_string(msg->get())).append(" ");
       }
       str.append("] ss=").append(std::to_string(super_step)).append("\n");
       std::cout<<str;

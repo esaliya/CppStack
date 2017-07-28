@@ -24,3 +24,6 @@ endif()
 set(SOURCE_FILES main_test.cpp test_map_class.cpp test_map_class.hpp map_constructor.cpp map_constructor.hpp polynomial.cpp polynomial.hpp)
 add_executable(main_test ${SOURCE_FILES})
 
+set(SOURCE_FILES main_omp.cpp)
+add_executable(main_omp ${SOURCE_FILES})
+

@@ -164,7 +164,10 @@ void measure_binary_read(long vc, long ec, char *file) {
 
   if (world_proc_rank == 0){
     for (int i = 0; i < 10; ++i) {
-      int val = (header[i*size_of_int+3]<<0) | (header[i*size_of_int+2]<<8) | (header[i*size_of_int+1]<<16) | (header[i*size_of_int+0]<<24);
+      int val = (((int)header[i*size_of_int+3]<<0))
+                + ((int)(header[i*size_of_int+2]<<8))
+                + ((int)(header[i*size_of_int+1]<<16))
+                + ((int)(header[i*size_of_int+0]<<24));
 //      int val = (header[i*size_of_int+0]<<0) | (header[i*size_of_int+1]<<8) | (header[i*size_of_int+2]<<16) | (header[i*size_of_int+3]<<24);
       std::cout<<"val "<<i<<" "<<val<<std::endl;
     }

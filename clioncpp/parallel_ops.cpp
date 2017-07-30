@@ -674,9 +674,9 @@ void parallel_ops::recv_msgs() {
 }
 
 int parallel_ops::read_int(long idx, char *f) {
-  return (((unsigned char)f[i*4+3]<<0))
-         + ((unsigned char)(f[i*4+2]<<8))
-         + ((unsigned char)(f[i*4+1]<<16))
-         + ((unsigned char)(f[i*4+0]<<24));
+  return (((unsigned char)f[idx*4+3]<<0))
+         + ((unsigned char)(f[idx*4+2]<<8))
+         + ((unsigned char)(f[idx*4+1]<<16))
+         + ((unsigned char)(f[idx*4+0]<<24));
 
 }

@@ -154,17 +154,18 @@ void measure_binary_read(long vc, long ec, char *file) {
   long my_vc = (world_proc_rank < r) ? q+1: q;
   long skip_vc = q*world_proc_rank + (world_proc_rank < r ? world_proc_rank : r);
 
+  int size_of_int = sizeof(int);
   long header_length = vc  * 2;
-  long *header = new long[header_length];
+  char *header = new char[header_length*size_of_int];
 
   std::ifstream binary(file, std::ios::in | std::ios::binary);
-  binary.read((char*)header, sizeof(int)*header_length);
+  binary.read(header, size_of_int * header_length);
 
   if (world_proc_rank == 0){
     for (int i = 0; i < 10; ++i) {
-      std::cout << header[i] << " ";
+      int val = (header[i*size_of_int+3]<<0) | (header[i*size_of_int+2]<<8) | (header[i*size_of_int+1]<<16) | (header[i*size_of_int+0]<<24);
+      std::cout<<"val "<<i<<" "<<val<<std::endl;
     }
-    std::cout<<std::endl;
   }
 
   delete [] header;

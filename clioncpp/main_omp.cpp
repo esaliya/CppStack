@@ -10,7 +10,7 @@ typedef std::chrono::high_resolution_clock hrc_t;
 
 void print_timing(const std::chrono::time_point<std::chrono::high_resolution_clock> &start_ms,
                   const std::chrono::time_point<std::chrono::high_resolution_clock> &end_ms, const std::string &msg);
-void MPI_Bcast_chunk(int* arr, unsigned long length, int root, int rank)
+void MPI_Bcast_chunk(int* arr, unsigned long length, int root, int rank);
 
 int world_proc_rank;
 int world_procs_count;

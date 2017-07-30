@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
   }*/
 
 //  measure_bcast(i, rank);
-  measure_binary_read(std::stol(argv[0]), std::stol(argv[1]), argv[0]);
+  measure_binary_read(std::stol(argv[1]), std::stol(argv[2]), argv[3]);
 
   MPI::Finalize();
 

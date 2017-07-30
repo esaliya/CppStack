@@ -139,8 +139,8 @@ int parse_args(int argc, char **argv) {
     global_edge_count = vm[CMD_OPTION_SHORT_EC].as<int>();
   } else {
     if (is_rank0)
-      std::cout<<"ERROR: Edge count not specified"<<std::endl;
-    return -1;
+      std::cout<<"INFO: Edge count not specified, ignoring edge count"<<std::endl;
+    global_edge_count = -1;
   }
 
   if(vm.count(CMD_OPTION_SHORT_K)){

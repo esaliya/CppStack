@@ -71,6 +71,8 @@ private:
   void print_timing(const std::chrono::time_point<std::chrono::high_resolution_clock> &start_ms,
                     const std::chrono::time_point<std::chrono::high_resolution_clock> &end_ms, const std::string &msg) const;
 
+  int read_int(long idx, char *f);
+
   void test_isend_irecv();
 
   void test_string_allreduce();

@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
   world_procs_count = size;
   rank = MPI::COMM_WORLD.Get_rank();
   world_proc_rank = rank;
-  MPI::Get_processor_name(name, len);
+  /*MPI::Get_processor_name(name, len);
 
   if (rank == 0) {
 
@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
     MPI::COMM_WORLD.Send(&len, 1, MPI_INT, 0, 1);
     MPI::COMM_WORLD.Send(name, len + 1, MPI_CHAR, 0, 1);
 
-  }
+  }*/
 
 // Measure bcast timing for 13 GB of Friendstar data
   int e = 1806067135;

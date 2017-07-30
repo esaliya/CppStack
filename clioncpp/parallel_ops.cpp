@@ -48,14 +48,15 @@ int parallel_ops::get_world_procs_count() const {
   return world_procs_count;
 }
 
-void parallel_ops::set_parallel_decomposition(const char *file, int global_vertx_count, std::vector<std::shared_ptr<vertex>> *&vertices) {
+void parallel_ops::set_parallel_decomposition(const char *file, int global_vertx_count, int global_edge_count, std::vector<std::shared_ptr<vertex>> *&vertices) {
   // TODO - add logic to switch between different partition methods as well as txt vs binary files
   // for now let's assume simple partitioning with text files
-  simple_graph_partition(file, global_vertx_count, vertices);
+  simple_graph_partition(file, global_vertx_count, global_edge_count, vertices);
   decompose_among_threads(vertices);
 }
 
-void parallel_ops::simple_graph_partition(const char *file, int global_vertex_count, std::vector<std::shared_ptr<vertex>> *&vertices) {
+// NOTE - Old method keep it for now
+/*void parallel_ops::simple_graph_partition(const char *file, int global_vertex_count, int global_edge_count, std::vector<std::shared_ptr<vertex>> *&vertices) {
   std::chrono::time_point<std::chrono::high_resolution_clock > start, end;
 
   int q = global_vertex_count/world_procs_count;
@@ -97,6 +98,53 @@ void parallel_ops::simple_graph_partition(const char *file, int global_vertex_co
   }
   end = std::chrono::high_resolution_clock::now();
   print_timing(start, end, "simple_graph_partition: graph_read");
+
+  fs.close();
+
+  start = std::chrono::high_resolution_clock::now();
+  find_nbrs(global_vertex_count, local_vertex_count, vertices);
+  end = std::chrono::high_resolution_clock::now();
+  print_timing(start, end, "simple_graph_partition: find_nbrs total");
+}*/
+
+void parallel_ops::simple_graph_partition(const char *file, int global_vertex_count, int global_edge_count, std::vector<std::shared_ptr<vertex>> *&vertices) {
+  std::chrono::time_point<std::chrono::high_resolution_clock > start, end;
+
+  int q = global_vertex_count/world_procs_count;
+  int r = global_vertex_count % world_procs_count;
+  int local_vertex_count = (world_proc_rank < r) ? q+1: q;
+  int skip_vertex_count = q*world_proc_rank + (world_proc_rank < r ? world_proc_rank : r);
+
+  int *graph = new int[global_edge_count];
+
+  std::ifstream fs;
+  std::string line;
+  std::vector<std::string> tokens;
+  vertices = new std::vector<std::shared_ptr<vertex>>((unsigned long) local_vertex_count);
+
+  fs.open(file);
+
+  start = std::chrono::high_resolution_clock::now();
+  int local_idx;
+  for (int i = 0; i < global_vertex_count; ++i) {
+    getline(fs, line);
+    if (i < skip_vertex_count) {
+      continue;
+    }
+    local_idx = i-skip_vertex_count;
+    boost::split(tokens, line, boost::is_any_of(" "), boost::token_compress_on);
+    (*vertices)[local_idx] = std::make_shared<vertex>(tokens);
+
+    if (local_idx+1 == local_vertex_count){
+      break;
+    }
+  }
+  end = std::chrono::high_resolution_clock::now();
+  print_timing(start, end, "simple_graph_partition: graph_read");
+
+  delete [] graph;
+
+
 
   fs.close();
 

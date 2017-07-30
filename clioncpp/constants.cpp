@@ -3,8 +3,11 @@
 //
 #include <iostream>
 const char *PROGRAM_NAME = "MultilinearScan";
-const char *CMD_OPTION_SHORT_VC = "v";
+const char *CMD_OPTION_SHORT_VC = "vc";
 const char *CMD_OPTION_DESCRIPTION_VC = "Vertex count";
+
+const char *CMD_OPTION_SHORT_EC = "ec";
+const char *CMD_OPTION_DESCRIPTION_EC = "Edge count";
 
 const char *CMD_OPTION_SHORT_K = "k";
 const char *CMD_OPTION_DESCRIPTION_K = "Motif size";

@@ -38,7 +38,7 @@ public:
   ~parallel_ops();
 
   void teardown_parallelism();
-  void set_parallel_decomposition(const char* file, int global_vertx_count, std::vector<std::shared_ptr<vertex>> *&vertices);
+  void set_parallel_decomposition(const char* file, int global_vertx_count, int global_edge_count, std::vector<std::shared_ptr<vertex>> *&vertices);
   void send_msgs(int msg_size);
   void recv_msgs();
 
@@ -63,7 +63,7 @@ private:
 
   parallel_ops(int world_proc_rank, int world_procs_count);
 
-  void simple_graph_partition(const char* file, int global_vertex_count, std::vector<std::shared_ptr<vertex>> *&vertices);
+  void simple_graph_partition(const char* file, int global_vertex_count, int global_edge_count, std::vector<std::shared_ptr<vertex>> *&vertices);
   void decompose_among_threads(std::vector<std::shared_ptr<vertex>> *&vertices);
   void find_nbrs(int global_vertex_count, int local_vertex_count, std::vector<std::shared_ptr<vertex>> *&vertices);
   std::string mpi_gather_string(std::string &str);

@@ -35,6 +35,7 @@ int log2(int x);
 void print_timing(const double duration,const std::string &msg);
 
 int global_vertex_count;
+int global_edge_count;
 int k;
 int r; // not used in k-path problem
 int delta;
@@ -89,7 +90,7 @@ int main(int argc, char **argv) {
   is_rank0 = (p_ops->get_world_proc_rank() == 0);
 
   std::vector<std::shared_ptr<vertex>> *vertices = nullptr;
-  p_ops->set_parallel_decomposition(input_file.c_str(), global_vertex_count, vertices);
+  p_ops->set_parallel_decomposition(input_file.c_str(), global_vertex_count, global_edge_count, vertices);
   run_program(vertices);
   delete vertices;
   p_ops->teardown_parallelism();
@@ -102,6 +103,7 @@ int parse_args(int argc, char **argv) {
   desc.add_options()
       ("help", "produce help message")
       (CMD_OPTION_SHORT_VC, po::value<int>(), CMD_OPTION_DESCRIPTION_VC)
+      (CMD_OPTION_SHORT_EC, po::value<int>(), CMD_OPTION_DESCRIPTION_EC)
       (CMD_OPTION_SHORT_K, po::value<int>(), CMD_OPTION_DESCRIPTION_K)
       (CMD_OPTION_SHORT_DELTA, po::value<int>(), CMD_OPTION_DESCRIPTION_DELTA)
       (CMD_OPTION_SHORT_ALPHA, po::value<double>(), CMD_OPTION_DESCRIPTION_ALPHA)
@@ -130,6 +132,14 @@ int parse_args(int argc, char **argv) {
   } else {
     if (is_rank0)
       std::cout<<"ERROR: Vertex count not specified"<<std::endl;
+    return -1;
+  }
+
+  if (vm.count(CMD_OPTION_SHORT_EC)){
+    global_edge_count = vm[CMD_OPTION_SHORT_EC].as<int>();
+  } else {
+    if (is_rank0)
+      std::cout<<"ERROR: Edge count not specified"<<std::endl;
     return -1;
   }
 

@@ -12,6 +12,9 @@ extern const char *PROGRAM_NAME;
 extern const char *CMD_OPTION_SHORT_VC;
 extern const char *CMD_OPTION_DESCRIPTION_VC;
 
+extern const char *CMD_OPTION_SHORT_EC;
+extern const char *CMD_OPTION_DESCRIPTION_EC;
+
 extern const char *CMD_OPTION_SHORT_K;
 extern const char *CMD_OPTION_DESCRIPTION_K;
 

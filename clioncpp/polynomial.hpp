@@ -7,8 +7,8 @@
 
 
 #include <set>
-#include <boost/shared_ptr.hpp>
 #include <vector>
+#include <memory>
 
 typedef bool (*rev_comp_t)(const long&, const long&);
 

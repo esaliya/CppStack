@@ -1,6 +1,8 @@
 #include <iostream>
 #include <chrono>
+#include <assert.h>
 #include "mpi.h"
+#define CHUNK_SIZE 134217728
 
 typedef std::chrono::duration<double, std::milli> ms_t;
 typedef std::chrono::time_point<std::chrono::high_resolution_clock> ticks_t;
@@ -8,6 +10,7 @@ typedef std::chrono::high_resolution_clock hrc_t;
 
 void print_timing(const std::chrono::time_point<std::chrono::high_resolution_clock> &start_ms,
                   const std::chrono::time_point<std::chrono::high_resolution_clock> &end_ms, const std::string &msg);
+void MPI_Bcast_chunk(int* arr, unsigned long length, int root, int rank)
 
 int world_proc_rank;
 int world_procs_count;
@@ -66,7 +69,8 @@ int main(int argc, char *argv[]) {
     // Just to get cleaner timings on bcast
     MPI_Barrier(MPI_COMM_WORLD);
     start = hrc_t::now();
-    MPI_Bcast(src, e, MPI_INT, 0, MPI_COMM_WORLD);
+//    MPI_Bcast(src, e, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast_chunk(src, (unsigned long) e, 0, rank);
     end = hrc_t::now();
     print_timing(start, end, "Array bcast (ms):");
   }
@@ -77,6 +81,46 @@ int main(int argc, char *argv[]) {
   MPI::Finalize();
 
   return (0);
+}
+
+void MPI_Bcast_chunk(int* arr, unsigned long length, int root, int rank)
+{
+#if DEBUG
+  printf("%d MPI_B %d %lu\n", rank, root, length);
+#endif
+
+  if (length < CHUNK_SIZE)
+  {
+#if DEBUG
+    printf("%d MPI_B no chunk %d %lu\n", rank, root, length);
+#endif
+    MPI_Bcast(arr, length, MPI_INT, root, MPI_COMM_WORLD);
+  }
+  else
+  {
+    unsigned long num_bcasts = length / CHUNK_SIZE;
+    unsigned long cur_off = 0;
+#if DEBUG
+    printf("%d chunk numb %d %lu\n", rank, root, num_bcasts);
+#endif
+    for (int i = 0; i < num_bcasts; ++i)
+    {
+#if DEBUG
+      printf("%d doing b %d %lu\n", rank, root, cur_off);
+#endif
+      MPI_Bcast(&arr[cur_off], CHUNK_SIZE, MPI_INT, root, MPI_COMM_WORLD);
+      cur_off += CHUNK_SIZE;
+    }
+    unsigned long final_size = length - cur_off;
+    assert(final_size > 0);
+#if DEBUG
+    printf("%d final b %d %lu %lu\n", rank, root, cur_off, final_size);
+#endif
+    MPI_Bcast(&arr[cur_off], final_size, MPI_INT, root, MPI_COMM_WORLD);
+  }
+#if DEBUG
+  printf("%d done\n", rank);
+#endif
 }
 
 void print_timing(

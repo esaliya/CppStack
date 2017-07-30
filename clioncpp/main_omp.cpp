@@ -155,6 +155,7 @@ void measure_binary_read(long vc, long ec, char *file) {
   long skip_vc = q*world_proc_rank + (world_proc_rank < r ? world_proc_rank : r);
 
   int size_of_int = sizeof(int);
+  std::cout<<"size_of_int: "<< size_of_int<<std::endl;
   long header_length = vc  * 2;
   char *header = new char[header_length*size_of_int];
 
@@ -163,8 +164,8 @@ void measure_binary_read(long vc, long ec, char *file) {
 
   if (world_proc_rank == 0){
     for (int i = 0; i < 10; ++i) {
-//      int val = (header[i*size_of_int+3]<<0) | (header[i*size_of_int+2]<<8) | (header[i*size_of_int+1]<<16) | (header[i*size_of_int+0]<<24);
-      int val = (header[i*size_of_int+0]<<0) | (header[i*size_of_int+1]<<8) | (header[i*size_of_int+2]<<16) | (header[i*size_of_int+3]<<24);
+      int val = (header[i*size_of_int+3]<<0) | (header[i*size_of_int+2]<<8) | (header[i*size_of_int+1]<<16) | (header[i*size_of_int+0]<<24);
+//      int val = (header[i*size_of_int+0]<<0) | (header[i*size_of_int+1]<<8) | (header[i*size_of_int+2]<<16) | (header[i*size_of_int+3]<<24);
       std::cout<<"val "<<i<<" "<<val<<std::endl;
     }
   }

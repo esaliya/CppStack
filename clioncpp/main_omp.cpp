@@ -68,6 +68,9 @@ int main(int argc, char *argv[]) {
   for (i = 0; i < 20; ++i) {
     // Just to get cleaner timings on bcast
     MPI_Barrier(MPI_COMM_WORLD);
+    if (rank == 0){
+      std::cout<<"Iteration: "<< i <<std::endl;
+    }
     start = hrc_t::now();
 //    MPI_Bcast(src, e, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast_chunk(src, (unsigned long) e, 0, rank);

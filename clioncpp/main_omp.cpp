@@ -161,7 +161,10 @@ void measure_binary_read(long vc, long ec, char *file) {
   binary.read((char*)header, sizeof(int)*header_length);
 
   if (world_proc_rank == 0){
-    std::cout<<header[0]<<" "<<header[1]<<std::endl;
+    for (int i = 0; i < 10; ++i) {
+      std::cout << header[i] << " ";
+    }
+    std::cout<<std::endl;
   }
 
   delete [] header;

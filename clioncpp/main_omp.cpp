@@ -1,6 +1,7 @@
 #include <iostream>
 #include <chrono>
 #include <assert.h>
+#include <fstream>
 #include "mpi.h"
 #define CHUNK_SIZE 134217728
 
@@ -12,11 +13,14 @@ void print_timing(const std::chrono::time_point<std::chrono::high_resolution_clo
                   const std::chrono::time_point<std::chrono::high_resolution_clock> &end_ms, const std::string &msg);
 void MPI_Bcast_chunk(int* arr, unsigned long length, int root, int rank);
 
+void measure_bcast(int i, int rank);
+void measure_binary_read(long vc, long ec, char *file);
+
 int world_proc_rank;
 int world_procs_count;
 
 int main(int argc, char *argv[]) {
-  int i, rank, size, len;
+  int i = 0, rank, size, len;
   char name[MPI_MAX_PROCESSOR_NAME];
   MPI::Status stat;
 
@@ -49,41 +53,44 @@ int main(int argc, char *argv[]) {
 
   }*/
 
-// Measure bcast timing for 13 GB of Friendstar data
+//  measure_bcast(i, rank);
+  measure_binary_read(std::stol(argv[0]), std::stol(argv[1]), argv[0]);
+
+  MPI::Finalize();
+
+  return (0);
+}
+
+void measure_bcast(int i, int rank) {// Measure bcast timing for 13 GB of Friendstar data
   int e = 1806067135;
-  ticks_t start = hrc_t::now();
+  ticks_t start = std::chrono::_V2::system_clock::now();
   int *src = new int[e];
-  ticks_t end = hrc_t::now();
+  ticks_t end = std::chrono::_V2::system_clock::now();
   print_timing(start, end, "Array creation (ms):");
 
-  start = hrc_t::now();
+  start = std::chrono::_V2::system_clock::now();
   if (rank == 0){
     for (i = 0; i < e; ++i){
       src[i] = rank;
     }
   }
-  end = hrc_t::now();
+  end = std::chrono::_V2::system_clock::now();
   print_timing(start, end, "Array init (ms):");
 
   for (i = 0; i < 20; ++i) {
     // Just to get cleaner timings on bcast
     MPI_Barrier(MPI_COMM_WORLD);
     if (rank == 0){
-      std::cout<<"Iteration: "<< i <<std::endl;
+      std::cout << "Iteration: " << i << std::endl;
     }
-    start = hrc_t::now();
+    start = std::chrono::_V2::system_clock::now();
 //    MPI_Bcast(src, e, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast_chunk(src, (unsigned long) e, 0, rank);
-    end = hrc_t::now();
+    end = std::chrono::_V2::system_clock::now();
     print_timing(start, end, "Array bcast (ms):");
   }
 
   delete [] src;
-
-
-  MPI::Finalize();
-
-  return (0);
 }
 
 void MPI_Bcast_chunk(int* arr, unsigned long length, int root, int rank)
@@ -139,4 +146,23 @@ void print_timing(
     std::cout<<msg<<" [min max avg]ms: ["<< min_duration_ms
              << " " << max_duration_ms << " " << (avg_duration_ms / world_procs_count) << "]" <<std::endl;
   }
+}
+
+void measure_binary_read(long vc, long ec, char *file) {
+  long q = vc / world_procs_count;
+  long r = vc % world_procs_count;
+  long my_vc = (world_proc_rank < r) ? q+1: q;
+  long skip_vc = q*world_proc_rank + (world_proc_rank < r ? world_proc_rank : r);
+
+  long header_length = vc  * 2;
+  long *header = new long[header_length];
+
+  std::ifstream binary(file, std::ios::in | std::ios::binary);
+  binary.read((char*)header, sizeof(int)*header_length);
+
+  if (world_proc_rank == 0){
+    std::cout<<header[0]<<" "<<header[1]<<std::endl;
+  }
+
+  delete [] header;
 }
